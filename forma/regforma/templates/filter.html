@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фильтр закупок</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script>
+        function updateNomerDogovora() {
+            const companySelect = document.getElementById('company-select');
+            const nomerDogovoraSelect = document.getElementById('nomer-dogovora-select');
+            const selectedCompanyId = companySelect.value;
+
+            // Скрыть/показать выбор номера договора
+            if (selectedCompanyId) {
+                nomerDogovoraSelect.removeAttribute('disabled');
+            } else {
+                nomerDogovoraSelect.setAttribute('disabled', true);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Фильтр закупок</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="company-select" class="form-label">Выберите компанию:</label>
+                <select id="company-select" name="company_id" class="form-select" onchange="updateNomerDogovora()">
+                    <option value="">-- Выберите компанию --</option>
+                    {% for company in companies %}
+                        <option value="{{ company.id }}" {% if selected_company and selected_company.id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="nomer-dogovora-select" class="form-label">Выберите номер договора:</label>
+                <select id="nomer-dogovora-select" name="nomer_dogovora" class="form-select" {% if not selected_company %}disabled{% endif %}>
+                    <option value="">-- Выберите номер договора --</option>
+                    {% for zakupki in zakupki_list %}
+                        <option value="{{ zakupki.nomer_dogovora }}" {% if selected_nomer_dogovora == zakupki.nomer_dogovora %}selected{% endif %}>{{ zakupki.nomer_dogovora }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Показать лоты</button>
+        </form>
+
+        {% if lots_list %}
+            <h3 class="mt-4">Список лотов:</h3>
+            <ul class="list-group">
+                {% for lot in lots_list %}
+                    <li class="list-group-item">
+                        Лот: {{ lot.number_lot }} - Код OKRB: {{ lot.cod_okrb }} - Предмет закупки: {{ lot.predmet_zakupki }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

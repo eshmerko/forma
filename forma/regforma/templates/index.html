@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procurement Forms</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .form-section {
+            border: 2px solid #007bff; /* Цвет рамки */
+            border-radius: 10px; /* Скругление углов рамки */
+            background-color: #e9f5ff; /* Цвет фона */
+            padding: 20px; /* Отступы внутри блока */
+            margin: 20px auto; /* Отступы сверху и снизу, выравнивание по центру */
+            width: 70%; /* Ширина блока 70% */
+        }
+        .lot-form {
+            padding: 10px; /* Отступы внутри каждого блока лота */
+            border-bottom: 1px solid #007bff; /* Нижняя граница для отделения */
+            margin-bottom: 10px; /* Отступ снизу для визуального отделения */
+        }
+        .lot-form:last-child {
+            border-bottom: none; /* Убираем нижнюю границу у последнего лота */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Заполните формы для компании, закупки и лотов</h1>
+
+        <form method="POST" id="procurement-form">
+            {% csrf_token %}
+            
+            <!-- Форма компании -->
+            <div class="form-section">
+                <h3>Компания</h3>
+                {{ company_form.as_table }}
+            </div>
+            
+            <!-- Форма закупки -->
+            <div class="form-section">
+                <h3>Закупка</h3>
+                {{ zakupki_form.vid_zakupki.label_tag }}
+                {{ zakupki_form.vid_zakupki }}
+    
+                {{ zakupki_form.nomer_dogovora.label_tag }}
+                {{ zakupki_form.nomer_dogovora }}
+    
+                {{ zakupki_form.data_dogovora.label_tag }}
+                {{ zakupki_form.data_dogovora }}
+                <br>
+                <label for="id_price_full">Общая стоимость договора (БезНДС), руб.</label>
+                <input type="text" id="id_price_full" name="price_full" class="form-control form-control-lg" readonly placeholder="Заполняется автоматически, после заполнения лотов">
+            </div>
+
+            <!-- Formset для лотов -->
+            <div class="form-section">
+            <h3>Лоты</h3>
+                {{ formset.management_form }}
+                
+                <div id="lots-forms">
+                    {% for form in formset %}
+                        <div class="lot-form">
+                            {{ form.as_p }}
+                            <button type="button" class="btn btn-danger remove-lot-btn">Удалить лот</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            
+                <button type="button" id="add-lot-btn" class="btn btn-secondary">Добавить лот</button>
+            </div>
+        
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+        
+        <script>
+        // Функция для пересчета общей цены лотов
+        function updatePriceFull() {
+            let totalPrice = 0.00;
+            
+            // Проходим по каждому полю 'price_lot' и суммируем его значения
+            $('input[name$="price_lot"]').each(function() {
+                let price = parseFloat($(this).val());
+                if (!isNaN(price)) {
+                    totalPrice += price;
+                }
+            });
+
+            // Обновляем поле 'price_full' с новой суммой
+            $('#id_price_full').val(totalPrice.toFixed(2)); // Устанавливаем значение с двумя знаками после запятой
+        }
+
+        // Обработчик для добавления нового лота
+        document.getElementById('add-lot-btn').addEventListener('click', function() {
+            const formCount = document.querySelectorAll('.lot-form').length;
+            const formsetManagement = document.getElementById('id_form-TOTAL_FORMS');
+            const currentCount = parseInt(formsetManagement.value);
+            
+            const newFormHtml = document.querySelector('.lot-form').cloneNode(true);
+            newFormHtml.innerHTML = newFormHtml.innerHTML.replace(/form-\d+/g, `form-${currentCount}`);
+            
+            // Устанавливаем значение поля number_lot на currentCount + 1
+            newFormHtml.querySelector('input[name$="number_lot"]').value = currentCount + 1;
+
+            document.getElementById('lots-forms').appendChild(newFormHtml);
+            
+            formsetManagement.value = currentCount + 1;
+            updatePriceFull();  // Пересчитываем общую цену
+        });
+
+        // Событие изменения для каждого поля 'price_lot'
+        $(document).on('input', 'input[name$="price_lot"]', function() {
+            updatePriceFull();  // Пересчитываем общую цену
+        });
+
+        // Обработчик для удаления лота
+        $(document).on('click', '.remove-lot-btn', function() {
+            $(this).closest('.lot-form').remove(); // Удаляем родительский элемент .lot-form
+            updatePriceFull(); // Пересчитываем общую цену
+        });
+
+        </script>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
