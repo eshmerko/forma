@@ -26,6 +26,24 @@
     </style>
 </head>
 <body>
+
+    <!-- Контейнер для формы автоматического заполнения данных -->
+    <div class="bg-warning p-3 border rounded mt-3">
+        <h5>Автоматическое заполнение данных</h5>
+        <div class="row">
+            <form id="myForm" method="post" action="{% url 'my_view' %}">
+                {% csrf_token %}
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <label for="unp" class="col-form-label me-2">УНП:</label>
+                        <input id="unp" type="text" class="form-control" placeholder="690637982" name="unp" />
+                        <button type="submit" class="btn btn-danger mt-0 ms-2">Заполнить данные автоматически</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="container mt-5">
         <h1 class="mb-4">Заполните формы для компании, закупки и лотов</h1>
 
@@ -120,6 +138,38 @@
             updatePriceFull(); // Пересчитываем общую цену
         });
 
+        // AJAX-запрос для автоматического заполнения данных
+        $('#myForm').submit(function(e) {
+                e.preventDefault();
+                var form = $(this);
+                $('#error-message').hide(); // Скрываем предыдущее сообщение об ошибке
+
+                $.ajax({
+                    type: form.attr('method'),
+                    url: form.attr('action'),
+                    data: form.serialize(),
+                    success: function(response) {
+                        // Заполнение только нужных полей
+                        $('#id_unp').val(response.endpoint1[0].ngrn);
+                        $('#name').val(response.endpoint1[0].vn);
+                        
+                        // Формирование адреса
+                        var adress = `${response.endpoint2[0].nsi00201.vnstranp ? response.endpoint2[0].nsi00201.vnstranp + ', ' : ''}`
+                                    + `${response.endpoint2[0].nsi00202.vnsfull ? response.endpoint2[0].nsi00202.vnsfull + ', ' : ''}`
+                                    + `${response.endpoint2[0].vadrprim ? response.endpoint2[0].vadrprim + ' ' : ''}`
+                                    + `${response.endpoint2[0].vulitsa ? response.endpoint2[0].vulitsa + ', ' : ''}`
+                                    + `${response.endpoint2[0].vdom ? response.endpoint2[0].vdom + ' ' : ''}`
+                                    + `${response.endpoint2[0].vkorpus ? 'корпус ' + response.endpoint2[0].vkorpus + ' ' : ''}`;
+                        $('#adr').val(adress);
+
+                        // Дополнительные поля можно заполнить здесь
+                    },
+                    error: function(xhr) {
+                        // Вывод ошибки
+                        $('#error-message').text(xhr.responseJSON.error1 + ' ' + xhr.responseJSON.error2).show();
+                    }
+                });
+            });
         </script>
 
     </div>

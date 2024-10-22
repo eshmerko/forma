@@ -4,10 +4,36 @@ from .forms import CompanyForms, ZakupkiForms, LotsForms
 from .models import Company, PredmetZakupki, Lots
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+import requests
 
 @login_required
 def menu(request):
     return render(request, 'menu.html')
+
+def my_view(request):
+    if request.method == 'POST':
+        unp = request.POST.get('unp')
+
+        api_url1 = f'http://egr.gov.by/api/v2/egr/getJurNamesByRegNum/{unp}'
+        response1 = requests.get(api_url1)
+
+        api_url2 = f'http://egr.gov.by/api/v2/egr/getAddressByRegNum/{unp}'
+        response2 = requests.get(api_url2)
+
+        if response1.status_code == 200 and response2.status_code == 200:
+            api_data = {
+                'endpoint1': response1.json(),
+                'endpoint2': response2.json()
+            }
+            return JsonResponse(api_data, safe=False)
+        else:
+            error_data = {
+                'error1': f'Ошибка получения данных. Вам придется заполнить сведения в ручную.',
+                'error2': f'Нам очень жаль, но сервис ЕГР не смог выполнить ваш запрос.'
+            }
+            return JsonResponse(error_data, status=400)
+
+    return render(request, 'index.html')
 
 def index(request):
     # Создаем formset для лотов

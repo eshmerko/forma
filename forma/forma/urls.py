@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
-from regforma.views import (index, filter_view, calculate_price, menu)
+from regforma.views import (index, filter_view, calculate_price, menu, my_view)
 
 urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
@@ -26,4 +26,5 @@ urlpatterns = [
     path('', index, name='index'),
     path('filter/', filter_view, name='filter_view'),  # Новый маршрут для фильтрации
     path('calculate_price/', calculate_price, name='calculate_price'),
+    path('my_view/', my_view, name='my_view'),
 ]
