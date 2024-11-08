@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Companies</h2>
+    
+    {% for company in companies %}
+    
+    <!-- Разделительная линия между компаниями -->
+    {% if not forloop.first %}
+    <div class="company-divider"></div>
+    {% endif %}
+    
+    <table class="table table-bordered table-style">
+        <thead class="thead-dark">
+            <tr>
+                <th>№</th>
+                <th>Название организации</th>
+                <th>Юридический адрес</th>
+                <th>УНП</th>
+                <th>Автор</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ company.name }}</td>
+                <td>{{ company.adress }}</td>
+                <td>{{ company.unp }}</td>
+                <td>{{ company.author.username }}</td>
+            </tr>
+            <tr>
+                <td colspan="5">
+                    <!-- Таблица предметов закупки -->
+                    <!-- <h5>Предметы закупки</h5> -->
+                    <table class="table table-bordered table-style">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Вид процедуры закупки</th>
+                                <th>Номер договора</th>
+                                <th>Дата заключения договора</th>
+                                <th>Общая стоимость договора</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for zakupka in company.predmetzakupki_set.all %}
+                            <tr>
+                                <td>{{ zakupka.vid_zakupki }}</td>
+                                <td>{{ zakupka.nomer_dogovora }}</td>
+                                <td>{{ zakupka.data_dogovora }}</td>
+                                <td>{{ zakupka.price_full }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <!-- Таблица лотов -->
+                                    <!-- <h6>Лоты</h6> -->
+                                    <table class="table table-bordered table-style">
+                                        <thead class="thead-dark">
+                                            <tr>
+                                                <th>Номер лота</th>
+                                                <th>Код ОКРБ</th>
+                                                <th>Предмет закупки</th>
+                                                <th>Количество</th>
+                                                <th>Единица измерения</th>
+                                                <th>Страна</th>
+                                                <th>Стоимость лота</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for lot in zakupka.lots_set.all %}
+                                            <tr>
+                                                <td>{{ lot.number_lot }}</td>
+                                                <td>{{ lot.cod_okrb }}</td>
+                                                <td>{{ lot.predmet_zakupki }}</td>
+                                                <td>{{ lot.unit }}</td>
+                                                <td>{{ lot.ed_izmer }}</td>
+                                                <td>{{ lot.country }}</td>
+                                                <td>{{ lot.price_lot }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    {% endfor %}
+</div>
+{% endblock %}

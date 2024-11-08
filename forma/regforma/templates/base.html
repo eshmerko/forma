@@ -46,7 +46,16 @@
             background-color: #30b055;
             border-radius: 5px;
         }
-
+        /* Стиль для разделительных строк */
+        .company-divider {
+            height: 2px;
+            background-color: #343a40;
+            margin: 20px 0;
+        }
+        /* Общий стиль для всех таблиц */
+        .table-style {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -75,7 +84,7 @@
                             <a class="nav-link" href="#">Регистрация закупки</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Мои закупки</a>
+                            <a class="nav-link" href="{% url 'table' %}">Мои закупки</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">Фильтр закупок</a>

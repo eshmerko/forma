@@ -121,3 +121,13 @@ def calculate_price(request):
     if request.method == 'POST':
         total_price = request.POST.get('total_price', 0.00)
         return JsonResponse({'total_price': total_price})
+    
+@login_required
+def table(request):
+    companies = Company.objects.prefetch_related(
+        'predmetzakupki_set__lots_set'
+    ).all()
+    context = {
+        'companies': companies,
+    }
+    return render(request, 'table.html', context)
