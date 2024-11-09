@@ -9,11 +9,13 @@
 </head>
 <body>
     <div class="container">
-        <h2 class="text-center mt-5">Main Menu</h2>
+        <h2 class="text-center mt-5">Добро пожаловать, {{ request.user.first_name }}!</h2>
+        <h5 class="text-center mt-3">Выберете раздел для работы:</h5>
+        <br>
         <div class="list-group">
-            <a href="#" class="list-group-item list-group-item-action">Item 1</a>
-            <a href="#" class="list-group-item list-group-item-action">Item 2</a>
-            <a href="#" class="list-group-item list-group-item-action">Item 3</a>
+            <a href="{% url 'regforma' %}" class="list-group-item list-group-item-action">Закупочная деятельность</a>
+            <a href="#" class="list-group-item list-group-item-action">Метрология</a>
+            <a href="#" class="list-group-item list-group-item-action">Технология</a>
         </div>
     </div>
 </body>

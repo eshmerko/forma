@@ -16,16 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import path
-from regforma.views import (index, filter_view, calculate_price, menu, table, my_view)
+from django.urls import path, include
+from django.views.generic import RedirectView  # Импорт RedirectView
+from regforma.views import (export_to_excel, filter_view, calculate_price, menu, regforma, table, my_view)
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='/login/', permanent=False)),  # перенаправление на логин
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('menu/', menu, name='menu'),
     path('admin/', admin.site.urls),
-    path('', index, name='index'),
+    path('regforma/', regforma, name='regforma'),
     path('filter/', filter_view, name='filter_view'),  # Новый маршрут для фильтрации
     path('calculate_price/', calculate_price, name='calculate_price'),
     path('my_view/', my_view, name='my_view'),
     path('table/', table, name='table'),
+    path('table/export_excel/', export_to_excel, name='export_to_excel'),
+    path('accounts/', include('django.contrib.auth.urls')),  # маршруты для логина и логаута
 ]

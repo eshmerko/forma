@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Companies</h2>
+    <h2>Закупки {{ request.user.first_name }} {{ request.user.last_name }}</h2>
     
     {% for company in companies %}
     
@@ -90,5 +90,8 @@
         </tbody>
     </table>
     {% endfor %}
+    <!-- Кнопка для скачивания данных в Excel -->
+<a href="{% url 'export_to_excel' %}" class="btn btn-success mb-3">Скачать в Excel</a>
 </div>
+
 {% endblock %}

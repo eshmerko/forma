@@ -125,3 +125,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/menu/'
 
+LOGIN_URL = '/login/'
+
+LOGOUT_REDIRECT_URL = '/login/'  # Перенаправление на страницу логина после выхода
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Добавьте это
+    'django.contrib.messages.middleware.MessageMiddleware',  # И это
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Добавьте ваш middleware, если нужно
+]

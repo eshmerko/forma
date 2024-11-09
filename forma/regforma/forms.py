@@ -16,7 +16,7 @@ class ZakupkiForms(forms.ModelForm):
         model = PredmetZakupki
         fields = ['vid_zakupki', 'nomer_dogovora', 'data_dogovora', 'price_full']
         widgets = {
-            'vid_zakupki': forms.TextInput(attrs={'class': 'form-control'}),
+            'vid_zakupki': forms.Select(attrs={'class': 'form-control'}),
             'nomer_dogovora': forms.TextInput(attrs={'class': 'form-control'}),
             'data_dogovora': forms.DateInput(attrs={
                 'type': 'date',
@@ -39,8 +39,8 @@ class LotsForms(forms.ModelForm):
             'cod_okrb': forms.TextInput(attrs={'class': 'form-control'}),
             'predmet_zakupki': forms.TextInput(attrs={'class': 'form-control'}),
             'unit': forms.TextInput(attrs={'class': 'form-control'}),
-            'ed_izmer': forms.TextInput(attrs={'class': 'form-control'}),
-            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'ed_izmer': forms.Select(attrs={'class': 'form-control'}),
+            'country': forms.Select(attrs={'class': 'form-control'}),
             'price_lot': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',

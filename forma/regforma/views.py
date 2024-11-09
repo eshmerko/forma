@@ -5,6 +5,8 @@ from .models import Company, PredmetZakupki, Lots
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 import requests
+from django.http import HttpResponse
+from openpyxl import Workbook
 
 @login_required
 def menu(request):
@@ -33,9 +35,9 @@ def my_view(request):
             }
             return JsonResponse(error_data, status=400)
 
-    return render(request, 'index.html')
+    return render(request, 'regforma.html')
 
-def index(request):
+def regforma(request):
     # Создаем formset для лотов
     LotsFormSet = modelformset_factory(Lots, form=LotsForms, extra=1)
     
@@ -70,14 +72,14 @@ def index(request):
                 lot.zakupki = zakupki_instance
                 lot.save()
 
-            return redirect('index')
+            return redirect('regforma')
     
     else:
         company_form = CompanyForms()
         zakupki_form = ZakupkiForms()
         formset = LotsFormSet(queryset=Lots.objects.none())
     
-    return render(request, 'index.html', {
+    return render(request, 'regforma.html', {
         'company_form': company_form,
         'zakupki_form': zakupki_form,
         'formset': formset,
@@ -131,3 +133,51 @@ def table(request):
         'companies': companies,
     }
     return render(request, 'table.html', context)
+
+@login_required
+def export_to_excel(request):
+    # Создаем книгу и активный лист
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Компании и закупки"
+    
+    # Заголовки таблицы
+    headers = [
+        "№", "Название организации", "Юридический адрес", "УНП", "Автор",
+        "Вид процедуры закупки", "Номер договора", "Дата заключения договора", "Общая стоимость договора",
+        "Номер лота", "Код ОКРБ", "Предмет закупки", "Количество", "Единица измерения", "Страна", "Стоимость лота"
+    ]
+    ws.append(headers)
+    
+    # Заполняем таблицу данными
+    companies = Company.objects.prefetch_related(
+        'predmetzakupki_set__lots_set'
+    ).all()
+    
+    for company_index, company in enumerate(companies, start=1):
+        for zakupka in company.predmetzakupki_set.all():
+            for lot in zakupka.lots_set.all():
+                ws.append([
+                    company_index,
+                    company.name,
+                    company.adress,
+                    company.unp,
+                    company.author.username,
+                    zakupka.vid_zakupki,
+                    zakupka.nomer_dogovora,
+                    zakupka.data_dogovora,
+                    zakupka.price_full,
+                    lot.number_lot,
+                    lot.cod_okrb,
+                    lot.predmet_zakupki,
+                    lot.unit,
+                    lot.ed_izmer,
+                    lot.country,
+                    lot.price_lot,
+                ])
+    
+    # Устанавливаем HTTP-заголовки для скачивания
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=companies_data.xlsx'
+    wb.save(response)
+    return response
