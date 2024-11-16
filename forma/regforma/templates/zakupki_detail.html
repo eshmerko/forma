@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Информация о закупке №{{ zakupka.nomer_dogovora }}</h1>
+    
+    <div class="info">
+        <p><label>Закупку провел:</label> {{ zakupka.company.name }}</p>
+        <p><label>Дата регистрации в БД:</label> {{ zakupka.data_registracii|date:"d.m.Y" }}</p>
+        <p><label>Код ОКРБ:</label> {{ zakupka.okrb_code }}</p>
+        <p><label>Предмет закупки:</label> {{ zakupka.predmet }}</p>
+        <p><label>Количество:</label> {{ zakupka.kolichestvo }}</p>
+        <p><label>Страна:</label> {{ zakupka.strana }}</p>
+        <p><label>Вид закупки:</label> {{ zakupka.vid_zakupki }}</p>
+        <p><label>Название компании:</label> {{ zakupka.company.name }}</p>
+        <p><label>Общая сумма контракта:</label> {{ zakupka.price_full }}</p>
+        <p><label>Количество лотов:</label> {{ lots.count }}</p>
+        <p><label>Номер и дата договора:</label> {{ zakupka.nomer_dogovora }}, {{ zakupka.data_dogovora|date:"d.m.Y" }}</p>
+    </div>
+
+    <div class="button-container">
+        <!-- Кнопка для генерации PDF -->
+        <a href="{% url 'generate_pdf' zakupka.id %}" class="pdf-button">Печать в PDF</a>
+    </div>
+</div>
+{% endblock %}

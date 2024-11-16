@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.forms import modelformset_factory
 from .forms import CompanyForms, ZakupkiForms, LotsForms
 from .models import Company, PredmetZakupki, Lots
@@ -7,6 +7,9 @@ from django.contrib.auth.decorators import login_required
 import requests
 from django.http import HttpResponse
 from openpyxl import Workbook
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
 @login_required
 def menu(request):
@@ -37,8 +40,20 @@ def my_view(request):
 
     return render(request, 'regforma.html')
 
+# View для отображения информации о закупке
+def zakupki_detail(request, zakupki_id):
+    zakupka = get_object_or_404(PredmetZakupki, id=zakupki_id)
+    company = zakupka.company
+    lots = Lots.objects.filter(zakupki=zakupka)
+
+    return render(request, 'zakupki_detail.html', {
+        'zakupka': zakupka,
+        'company': company,
+        'lots': lots,
+    })
+
+# Обновленный regforma с редиректом на страницу с деталями
 def regforma(request):
-    # Создаем formset для лотов
     LotsFormSet = modelformset_factory(Lots, form=LotsForms, extra=1)
     
     if request.method == 'POST':
@@ -47,7 +62,6 @@ def regforma(request):
         formset = LotsFormSet(request.POST)
         
         if company_form.is_valid() and zakupki_form.is_valid() and formset.is_valid():
-            # Сохранение или получение компании
             company = company_form.save(commit=False)
             company_instance, created = Company.objects.get_or_create(
                 name=company.name,
@@ -55,24 +69,24 @@ def regforma(request):
                 defaults={'adress': company.adress}
             )
             
-            # Сохранение или получение закупки
             zakupki = zakupki_form.save(commit=False)
             zakupki.company = company_instance
-            
-                       
             zakupki_instance, created = PredmetZakupki.objects.get_or_create(
                 nomer_dogovora=zakupki.nomer_dogovora,
                 company=company_instance,
-                defaults={'data_dogovora': zakupki.data_dogovora, 'price_full': zakupki.price_full, 'vid_zakupki': zakupki.vid_zakupki}
+                defaults={
+                    'data_dogovora': zakupki.data_dogovora, 
+                    'price_full': zakupki.price_full, 
+                    'vid_zakupki': zakupki.vid_zakupki
+                }
             )
 
-            # Сохранение каждого лота из formset
             for form in formset:
                 lot = form.save(commit=False)
                 lot.zakupki = zakupki_instance
                 lot.save()
 
-            return redirect('regforma')
+            return redirect('zakupki_detail', zakupki_id=zakupki_instance.id)
     
     else:
         company_form = CompanyForms()
@@ -180,4 +194,31 @@ def export_to_excel(request):
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=companies_data.xlsx'
     wb.save(response)
+    return response
+
+def generate_pdf(request, zakupki_id):
+    # Получаем информацию о закупке
+    zakupka = get_object_or_404(PredmetZakupki, id=zakupki_id)
+    company = zakupka.company
+    lots = Lots.objects.filter(zakupki=zakupka)
+
+    # Создаем HttpResponse с типом 'application/pdf'
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="zakupka_{zakupki_id}.pdf"'
+
+
+    # Создаем PDF с помощью ReportLab
+    p = canvas.Canvas(response)
+     # Подключаем шрифт
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'regforma/fonts/DejaVuSans.ttf'))
+    p.setFont("DejaVuSans", 14)
+    p.drawString(100, 800, f"Информация о закупке №{zakupka.nomer_dogovora}")
+    p.setFont("DejaVuSans", 14)
+    p.drawString(100, 770, f"Закупку провел: {request.user.last_name} {request.user.first_name}")
+    p.drawString(100, 750, f"Дата регистрации в БД: {zakupka.data_creator_zakupki.strftime('%d.%m.%Y')}")
+    # Добавьте остальную информацию здесь...
+
+    # Закрываем PDF и возвращаем ответ
+    p.showPage()
+    p.save()
     return response
