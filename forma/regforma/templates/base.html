@@ -56,6 +56,32 @@
         .table-style {
             margin-bottom: 20px;
         }
+        .pdf-button {
+        display: inline-block;
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        text-decoration: none;
+        color: white;
+        background-color: #007bff; /* Цвет кнопки */
+        border: none;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+        }
+
+        .pdf-button:hover {
+            background-color: #0056b3; /* Цвет при наведении */
+        }
+
+        .pdf-button:active {
+            background-color: #003f7f; /* Цвет при нажатии */
+        }
+
+        .button-container {
+            text-align: center; /* Центрируем кнопку */
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -87,7 +113,7 @@
                             <a class="nav-link" href="{% url 'table' %}">Мои закупки</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Фильтр закупок</a>
+                            <a class="nav-link" href="{% url 'filter_view' %}">Фильтр закупок</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav">

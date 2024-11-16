@@ -1,15 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="form-section-h1">
-        <div class="row">
-            <h1 class="">Регистрация закупки</h1>
-        </div>
-    </div>
+<div class="container">
 
     <!-- Контейнер для формы автоматического заполнения данных -->
     <div class="form-section">
+        <div class="row">
+            <h2 class="">Регистрация закупки</h2>
+        </div>
+        <br>
         <h5>Автоматическое заполнение данных</h5>
         <div class="row">
             <form id="myForm" method="post" action="{% url 'my_view' %}">

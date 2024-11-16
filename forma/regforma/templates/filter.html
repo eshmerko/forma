@@ -1,67 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Фильтр закупок</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script>
-        function updateNomerDogovora() {
-            const companySelect = document.getElementById('company-select');
-            const nomerDogovoraSelect = document.getElementById('nomer-dogovora-select');
-            const selectedCompanyId = companySelect.value;
+{% extends 'base.html' %}
 
-            // Скрыть/показать выбор номера договора
-            if (selectedCompanyId) {
-                nomerDogovoraSelect.removeAttribute('disabled');
-            } else {
-                nomerDogovoraSelect.setAttribute('disabled', true);
-            }
-        }
-    </script>
-</head>
-<body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Фильтр закупок</h1>
-
-        <form method="POST">
+{% block content %}
+<div class="container">
+    <div class="form-section">
+        <form method="post">
             {% csrf_token %}
-            
-            <div class="mb-3">
-                <label for="company-select" class="form-label">Выберите компанию:</label>
-                <select id="company-select" name="company_id" class="form-select" onchange="updateNomerDogovora()">
+            <div>
+                <label for="company_id">Выберите компанию:</label>
+                <select id="company_id" name="company_id">
                     <option value="">-- Выберите компанию --</option>
                     {% for company in companies %}
-                        <option value="{{ company.id }}" {% if selected_company and selected_company.id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                        <option value="{{ company.id }}" {% if selected_company and company.id == selected_company.id %}selected{% endif %}>
+                            {{ company.name }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
-            <div class="mb-3">
-                <label for="nomer-dogovora-select" class="form-label">Выберите номер договора:</label>
-                <select id="nomer-dogovora-select" name="nomer_dogovora" class="form-select" {% if not selected_company %}disabled{% endif %}>
-                    <option value="">-- Выберите номер договора --</option>
-                    {% for zakupki in zakupki_list %}
-                        <option value="{{ zakupki.nomer_dogovora }}" {% if selected_nomer_dogovora == zakupki.nomer_dogovora %}selected{% endif %}>{{ zakupki.nomer_dogovora }}</option>
-                    {% endfor %}
-                </select>
+            <div>
+                <label for="nomer_dogovora">Введите номер договора:</label>
+                <input id="nomer_dogovora" name="nomer_dogovora" type="text" value="{{ selected_nomer_dogovora }}">
             </div>
 
-            <button type="submit" class="btn btn-primary">Показать лоты</button>
+            <button type="submit">Фильтровать</button>
         </form>
 
+        {% if zakupki_list %}
+            <h3>Закупки:</h3>
+            <ul>
+                {% for zakupka in zakupki_list %}
+                    <li>{{ zakupka.vid_zakupki }} ({{ zakupka.nomer_dogovora }})</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
         {% if lots_list %}
-            <h3 class="mt-4">Список лотов:</h3>
-            <ul class="list-group">
+            <h3>Лоты:</h3>
+            <ul>
                 {% for lot in lots_list %}
-                    <li class="list-group-item">
-                        Лот: {{ lot.number_lot }} - Код OKRB: {{ lot.cod_okrb }} - Предмет закупки: {{ lot.predmet_zakupki }}
-                    </li>
+                    <li>{{ lot.predmet_zakupki }} - {{ lot.unit }} {{ lot.ed_izmer }}</li>
                 {% endfor %}
             </ul>
         {% endif %}
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

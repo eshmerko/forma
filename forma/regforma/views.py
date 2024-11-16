@@ -10,6 +10,9 @@ from openpyxl import Workbook
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 @login_required
 def menu(request):
@@ -100,30 +103,32 @@ def regforma(request):
     })
 
 def filter_view(request):
-    companies = Company.objects.all()  # Получаем все компании
+    companies = Company.objects.all().prefetch_related('zakupki__lots')  # Предварительная загрузка закупок и лотов
     selected_company = None
     selected_nomer_dogovora = None
-    zakupki_list = []  # Список для хранения закупок и связанных лотов
-    lots_list = []  # Список для хранения лотов
+    zakupki_list = []  # Список закупок
+    lots_list = []  # Список лотов
 
     if request.method == 'POST':
-        company_id = request.POST.get('company_id')  # Получаем выбранную компанию
-        selected_company = Company.objects.get(id=company_id) if company_id else None
+        company_id = request.POST.get('company_id')  # Получение выбранной компании
+        if company_id:
+            try:
+                selected_company = Company.objects.get(id=company_id)
+                zakupki_list = selected_company.zakupki.all()  # Используем related_name "zakupki" для удобства
+            except Company.DoesNotExist:
+                selected_company = None
 
-        if selected_company:
-            zakupki_list = PredmetZakupki.objects.filter(company=selected_company)  # Получаем закупки для выбранной компании
-            selected_nomer_dogovora = request.POST.get('nomer_dogovora')  # Получаем номер договора
+        selected_nomer_dogovora = request.POST.get('nomer_dogovora')  # Получение номера договора
+        if selected_company and selected_nomer_dogovora:
+            # Фильтрация закупок по номеру договора
+            zakupki_instance = PredmetZakupki.objects.filter(
+                nomer_dogovora=selected_nomer_dogovora,
+                company=selected_company
+            ).first()
 
-            if selected_nomer_dogovora:
-                # Проверяем, существует ли закупка с выбранным номером договора
-                try:
-                    zakupki_instance = PredmetZakupki.objects.get(nomer_dogovora=selected_nomer_dogovora, company=selected_company)
-                    # Получаем лоты, связанные с выбранным номером договора
-                    lots_list = Lots.objects.filter(zakupki=zakupki_instance)
-                except PredmetZakupki.DoesNotExist:
-                    # Обработка случая, когда закупка не найдена
-                    zakupki_instance = None
-                    lots_list = []
+            # Если закупка найдена, извлекаем связанные лоты
+            if zakupki_instance:
+                lots_list = zakupki_instance.lots.all()  # Используем related_name "lots"
 
     return render(request, 'filter.html', {
         'companies': companies,
@@ -140,13 +145,9 @@ def calculate_price(request):
     
 @login_required
 def table(request):
-    companies = Company.objects.prefetch_related(
-        'predmetzakupki_set__lots_set'
-    ).all()
-    context = {
-        'companies': companies,
-    }
-    return render(request, 'table.html', context)
+    companies = Company.objects.prefetch_related('zakupki__lots')  # Предзагрузка связанных данных
+    return render(request, 'table.html', {'companies': companies})
+
 
 @login_required
 def export_to_excel(request):
@@ -165,12 +166,12 @@ def export_to_excel(request):
     
     # Заполняем таблицу данными
     companies = Company.objects.prefetch_related(
-        'predmetzakupki_set__lots_set'
+        'zakupki__lots'  # Используем правильные имена для related_name
     ).all()
     
     for company_index, company in enumerate(companies, start=1):
-        for zakupka in company.predmetzakupki_set.all():
-            for lot in zakupka.lots_set.all():
+        for zakupka in company.zakupki.all():
+            for lot in zakupka.lots.all():
                 ws.append([
                     company_index,
                     company.name,
@@ -196,6 +197,28 @@ def export_to_excel(request):
     wb.save(response)
     return response
 
+def draw_wrapped_text(p, text, x, y, max_width):
+    """
+    Отрисовывает текст, автоматически перенося строки, если текст превышает max_width.
+    """
+    lines = []
+    words = text.split()
+    line = ""
+
+    for word in words:
+        # Проверяем, влезает ли слово в текущую строку
+        if pdfmetrics.stringWidth(line + " " + word, p._fontname, p._fontsize) <= max_width:
+            line += " " + word if line else word
+        else:
+            lines.append(line)
+            line = word
+    lines.append(line)
+
+    for line in lines:
+        p.drawString(x, y, line)
+        y -= 20  # Смещение по вертикали на следующую строку
+    return y
+
 def generate_pdf(request, zakupki_id):
     # Получаем информацию о закупке
     zakupka = get_object_or_404(PredmetZakupki, id=zakupki_id)
@@ -206,27 +229,50 @@ def generate_pdf(request, zakupki_id):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="zakupka_{zakupki_id}.pdf"'
 
-
     # Создаем PDF с помощью ReportLab
-    p = canvas.Canvas(response)
-     # Подключаем шрифт
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'regforma/fonts/DejaVuSans.ttf'))
-    
-    p.drawString(450, 780, f"Рег.№: {PredmetZakupki.id}")
-    p.setFont("DejaVuSans", 13)
-    p.drawString(70, 720, f"Дата регистрации в БД: {zakupka.data_creator_zakupki.strftime('%d.%m.%Y')}")
-    p.drawString(70, 690, f"Код ОКРБ: {Lots.cod_okrb}")
-    p.drawString(70, 660, f"Предмет закупки: {Lots.predmet_zakupki}")
-    p.drawString(70, 630, f"Количество: {Lots.unit} {Lots.ed_izmer}")
-    p.drawString(70, 600, f"Страна: {Lots.country}")
-    p.drawString(70, 570, f"Вид закупки: {PredmetZakupki.vid_zakupki}")
-    p.drawString(70, 540, f"Название организации: {Company.name}")
-    p.drawString(70, 510, f"Сумма контракта: {PredmetZakupki.price_full}")
-    p.drawString(70, 480, f"Номер договора: {PredmetZakupki.nomer_dogovora} от {PredmetZakupki.data_dogovora}")
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4  # размеры страницы PDF
+
+    # Подключаем шрифт
+    try:
+        pdfmetrics.registerFont(TTFont('DejaVuSans', 'regforma/fonts/DejaVuSans.ttf'))
+        p.setFont("DejaVuSans", 13)
+    except Exception as e:
+        p.setFont("Helvetica", 13)  # Резервный шрифт
+        p.drawString(70, 800, "Ошибка загрузки шрифта: используем стандартный.")
+
+    # Заголовок
     p.setFont("DejaVuSans", 16)
     p.drawString(70, 780, f"Закупку провел: {request.user.first_name} {request.user.last_name}")
+    p.drawRightString(width - 70, 780, f"Закупка № {zakupka.id}")
+
+    # Основная информация
+    p.setFont("DejaVuSans", 14)
+    y = 750
+    y = draw_wrapped_text(p, f"Дата регистрации в БД: {zakupka.data_creator_zakupki.strftime('%d.%m.%Y')}", 70, y, width - 140)
+    y = draw_wrapped_text(p, f"Вид закупки: {zakupka.vid_zakupki}", 70, y, width - 140)
+    y = draw_wrapped_text(p, f"Название организации: {company.name}", 70, y, width - 140)
+    y = draw_wrapped_text(p, f"Юридический адрес: {company.adress}", 70, y, width - 140)
+    y = draw_wrapped_text(p, f"Номер договора: {zakupka.nomer_dogovora} от {zakupka.data_dogovora.strftime('%d.%m.%Y')}", 70, y, width - 140)
+    y = draw_wrapped_text(p, f"Сумма контракта: {zakupka.price_full} руб.", 70, y, width - 140)
+
+    # Лоты
+    y -= 20  # небольшое отступление перед блоком лотов
+    for lot in lots:
+        y = draw_wrapped_text(p, f"Лот № {lot.number_lot}: {lot.predmet_zakupki}", 70, y, width - 140)
+        y = draw_wrapped_text(p, f"  Код ОКРБ: {lot.cod_okrb}, Количество: {lot.unit} {lot.ed_izmer}, Страна: {lot.country}", 70, y, width - 140)
+        y = draw_wrapped_text(p, f"  Стоимость: {lot.price_lot} руб.", 70, y, width - 140)
+        y -= 20  # расстояние между лотами
+        if y < 100:  # Переход на новую страницу при нехватке места
+            p.showPage()
+            p.setFont("DejaVuSans", 13)
+            y = 780
+
+    # Подписи
+    p.setFont("DejaVuSans", 16)
+    #p.drawString(70, y - 20, f"Закупку провел: {request.user.first_name} {request.user.last_name}")
     p.setFont("DejaVuSans", 13)
-    p.drawString(70, 270, f"Проверил: ______________________ Е.Л.Шмерко ")
+    p.drawString(70, y - 50, f"Проверил: ______________________ Е.Л.Шмерко ")
 
     # Сохраняем PDF
     p.showPage()
