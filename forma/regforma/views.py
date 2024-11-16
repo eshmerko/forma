@@ -211,14 +211,25 @@ def generate_pdf(request, zakupki_id):
     p = canvas.Canvas(response)
      # Подключаем шрифт
     pdfmetrics.registerFont(TTFont('DejaVuSans', 'regforma/fonts/DejaVuSans.ttf'))
-    p.setFont("DejaVuSans", 14)
-    p.drawString(100, 800, f"Информация о закупке №{zakupka.nomer_dogovora}")
-    p.setFont("DejaVuSans", 14)
-    p.drawString(100, 770, f"Закупку провел: {request.user.last_name} {request.user.first_name}")
-    p.drawString(100, 750, f"Дата регистрации в БД: {zakupka.data_creator_zakupki.strftime('%d.%m.%Y')}")
-    # Добавьте остальную информацию здесь...
+    
+    p.drawString(450, 780, f"Рег.№: {PredmetZakupki.id}")
+    p.setFont("DejaVuSans", 13)
+    p.drawString(70, 720, f"Дата регистрации в БД: {zakupka.data_creator_zakupki.strftime('%d.%m.%Y')}")
+    p.drawString(70, 690, f"Код ОКРБ: {Lots.cod_okrb}")
+    p.drawString(70, 660, f"Предмет закупки: {Lots.predmet_zakupki}")
+    p.drawString(70, 630, f"Количество: {Lots.unit} {Lots.ed_izmer}")
+    p.drawString(70, 600, f"Страна: {Lots.country}")
+    p.drawString(70, 570, f"Вид закупки: {PredmetZakupki.vid_zakupki}")
+    p.drawString(70, 540, f"Название организации: {Company.name}")
+    p.drawString(70, 510, f"Сумма контракта: {PredmetZakupki.price_full}")
+    p.drawString(70, 480, f"Номер договора: {PredmetZakupki.nomer_dogovora} от {PredmetZakupki.data_dogovora}")
+    p.setFont("DejaVuSans", 16)
+    p.drawString(70, 780, f"Закупку провел: {request.user.first_name} {request.user.last_name}")
+    p.setFont("DejaVuSans", 13)
+    p.drawString(70, 270, f"Проверил: ______________________ Е.Л.Шмерко ")
 
-    # Закрываем PDF и возвращаем ответ
+    # Сохраняем PDF
     p.showPage()
     p.save()
+
     return response
