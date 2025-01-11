@@ -103,41 +103,51 @@ def regforma(request):
     })
 
 def filter_view(request):
-    companies = Company.objects.all().prefetch_related('zakupki__lots')  # Предварительная загрузка закупок и лотов
-    selected_company = None
-    selected_nomer_dogovora = None
-    zakupki_list = []  # Список закупок
-    lots_list = []  # Список лотов
+    companies = Company.objects.all().prefetch_related('zakupki__lots')  # Предварительная загрузка
+    zakupki_list = PredmetZakupki.objects.all()  # Все закупки
+    lots_list = Lots.objects.all()  # Все лоты
+    selected_filters = {}  # Хранение выбранных фильтров для отображения
 
     if request.method == 'POST':
-        company_id = request.POST.get('company_id')  # Получение выбранной компании
+        # Фильтр по компании
+        company_id = request.POST.get('company_id')
         if company_id:
-            try:
-                selected_company = Company.objects.get(id=company_id)
-                zakupki_list = selected_company.zakupki.all()  # Используем related_name "zakupki" для удобства
-            except Company.DoesNotExist:
-                selected_company = None
+            zakupki_list = zakupki_list.filter(company_id=company_id)
+            selected_filters['company_id'] = company_id
 
-        selected_nomer_dogovora = request.POST.get('nomer_dogovora')  # Получение номера договора
-        if selected_company and selected_nomer_dogovora:
-            # Фильтрация закупок по номеру договора
-            zakupki_instance = PredmetZakupki.objects.filter(
-                nomer_dogovora=selected_nomer_dogovora,
-                company=selected_company
-            ).first()
+        # Фильтр по номеру договора
+        nomer_dogovora = request.POST.get('nomer_dogovora')
+        if nomer_dogovora:
+            zakupki_list = zakupki_list.filter(nomer_dogovora__icontains=nomer_dogovora)
+            selected_filters['nomer_dogovora'] = nomer_dogovora
 
-            # Если закупка найдена, извлекаем связанные лоты
-            if zakupki_instance:
-                lots_list = zakupki_instance.lots.all()  # Используем related_name "lots"
+        # Фильтр по виду закупки
+        vid_zakupki = request.POST.get('vid_zakupki')
+        if vid_zakupki:
+            zakupki_list = zakupki_list.filter(vid_zakupki=vid_zakupki)
+            selected_filters['vid_zakupki'] = vid_zakupki
+
+        # Фильтрация лотов по выбранным закупкам
+        lots_list = Lots.objects.filter(zakupki__in=zakupki_list)
+
+        # Фильтр по стране
+        country = request.POST.get('country')
+        if country:
+            lots_list = lots_list.filter(country=country)
+            selected_filters['country'] = country
+
+        # Фильтр по единице измерения
+        ed_izmer = request.POST.get('ed_izmer')
+        if ed_izmer:
+            lots_list = lots_list.filter(ed_izmer=ed_izmer)
+            selected_filters['ed_izmer'] = ed_izmer
 
     return render(request, 'filter.html', {
         'companies': companies,
-        'selected_company': selected_company,
         'zakupki_list': zakupki_list,
-        'selected_nomer_dogovora': selected_nomer_dogovora,
         'lots_list': lots_list,
+        'selected_filters': selected_filters,
     })
-
 def calculate_price(request):
     if request.method == 'POST':
         total_price = request.POST.get('total_price', 0.00)

@@ -24,6 +24,7 @@ from regforma.views import (export_to_excel, filter_view, calculate_price, gener
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/', permanent=False)),  # перенаправление на логин
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('menu/', menu, name='menu'),
     path('admin/', admin.site.urls),
     path('regforma/', regforma, name='regforma'),

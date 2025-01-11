@@ -1,47 +1,90 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="form-section">
-        <form method="post">
-            {% csrf_token %}
-            <div>
-                <label for="company_id">Выберите компанию:</label>
-                <select id="company_id" name="company_id">
-                    <option value="">-- Выберите компанию --</option>
-                    {% for company in companies %}
-                        <option value="{{ company.id }}" {% if selected_company and company.id == selected_company.id %}selected{% endif %}>
-                            {{ company.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label for="nomer_dogovora">Введите номер договора:</label>
-                <input id="nomer_dogovora" name="nomer_dogovora" type="text" value="{{ selected_nomer_dogovora }}">
-            </div>
-
-            <button type="submit">Фильтровать</button>
-        </form>
-
-        {% if zakupki_list %}
-            <h3>Закупки:</h3>
-            <ul>
-                {% for zakupka in zakupki_list %}
-                    <li>{{ zakupka.vid_zakupki }} ({{ zakupka.nomer_dogovora }})</li>
+<div class="container mt-4">
+    <h2 class="mb-4">Фильтрация данных</h2>
+    <form method="POST" class="row g-3">
+        {% csrf_token %}
+        <!-- Фильтры -->
+        <div class="col-md-4">
+            <label for="company_id" class="form-label">Организация</label>
+            <select name="company_id" id="company_id" class="form-select">
+                <option value="">Все</option>
+                {% for company in companies %}
+                    <option value="{{ company.id }}" {% if selected_filters.company_id == company.id|stringformat:"s" %}selected{% endif %}>{{ company.name }}</option>
                 {% endfor %}
-            </ul>
-        {% endif %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="nomer_dogovora" class="form-label">Номер договора</label>
+            <input type="text" name="nomer_dogovora" id="nomer_dogovora" class="form-control" value="{{ selected_filters.nomer_dogovora|default_if_none:'' }}">
+        </div>
+        <div class="col-md-4">
+            <label for="vid_zakupki" class="form-label">Вид закупки</label>
+            <select name="vid_zakupki" id="vid_zakupki" class="form-select">
+                <option value="">Все</option>
+                {% for choice, display in zakupki_list.model.VID_ZAKUPKI_CHOICES %}
+                    <option value="{{ choice }}" {% if selected_filters.vid_zakupki == choice %}selected{% endif %}>{{ display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Применить фильтры</button>
+        </div>
+    </form>
 
-        {% if lots_list %}
-            <h3>Лоты:</h3>
-            <ul>
+    <hr>
+
+    <!-- Вывод данных -->
+    {% for zakupka in zakupki_list %}
+    <div class="zakupka-block border rounded p-4 mb-4 bg-light">
+        <h1 class="mb-4">Закупка № {{ zakupka.id }}</h1>
+        <div class="info">
+            <p class="mb-1"><strong>Закупку провел:</strong> {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            <p class="mb-1"><strong>Дата регистрации в БД:</strong> {{ zakupka.data_creator_zakupki|date:"d.m.Y" }}</p>
+            <p class="mb-1"><strong>Компания:</strong> {{ zakupka.company.name }}</p>
+            <p class="mb-1"><strong>Юридический адрес:</strong> {{ zakupka.company.adress }}</p>
+            <p class="mb-1"><strong>УНП:</strong> {{ zakupka.company.unp }}</p>
+            <p class="mb-1"><strong>Вид закупки:</strong> {{ zakupka.vid_zakupki }}</p>
+            <p class="mb-1"><strong>Общая сумма контракта:</strong> {{ zakupka.price_full }}</p>
+            <p class="mb-1"><strong>Номер и дата договора:</strong> {{ zakupka.nomer_dogovora }} от {{ zakupka.data_dogovora|date:"d.m.Y" }}</p>
+        </div>
+
+        <h3 class="mt-4">Информация о лотах</h3>
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>№ Лота</th>
+                    <th>Код ОКРБ</th>
+                    <th>Предмет закупки</th>
+                    <th>Количество</th>
+                    <th>Ед. измерения</th>
+                    <th>Страна</th>
+                    <th>Стоимость (Без НДС), руб.</th>
+                </tr>
+            </thead>
+            <tbody>
                 {% for lot in lots_list %}
-                    <li>{{ lot.predmet_zakupki }} - {{ lot.unit }} {{ lot.ed_izmer }}</li>
+                {% if lot.zakupki == zakupka %}
+                <tr>
+                    <td>{{ lot.number_lot }}</td>
+                    <td>{{ lot.cod_okrb }}</td>
+                    <td>{{ lot.predmet_zakupki }}</td>
+                    <td>{{ lot.unit }}</td>
+                    <td>{{ lot.ed_izmer }}</td>
+                    <td>{{ lot.country }}</td>
+                    <td>{{ lot.price_lot }}</td>
+                </tr>
+                {% endif %}
                 {% endfor %}
-            </ul>
-        {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Кнопка для генерации PDF -->
+        <div class="button-container text-center mt-4">
+            <a href="{% url 'generate_pdf' zakupka.id %}" class="btn btn-primary">Распечатать титульный лист закупки</a>
+        </div>
     </div>
+    {% endfor %}
 </div>
 {% endblock %}
