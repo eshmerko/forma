@@ -26,9 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-gt&&93nlyco+kq(uj-asf6+gfnr%+rn8e2vhh+vqj1j$6b(4v0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['pnp-vps1.branches.beloil.by']
 
 
 # Application definition
@@ -77,23 +77,23 @@ WSGI_APPLICATION = 'forma.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': BASE_DIR / 'db.sqlite3',
-   }
-}
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+#}
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "pnp1",
-#         "USER": "postgres",
-#         "PASSWORD": "7777710N",
-#         "HOST": "pnp-vps1.branches.beloil.by",
-#         "PORT": "5432",
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "pnp1",
+        "USER": "postgres",
+        "PASSWORD": "7777710N",
+        "HOST": "pnp-vps1.branches.beloil.by",
+        "PORT": "5432",
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -130,14 +130,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 # Укажите директорию, куда будут собираться статические файлы
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = '/var/www/pnp1/staticfiles'
 
 # URL-префикс для статических файлов
 STATIC_URL = '/static/'
 
 # Дополнительные директории для статических файлов
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    '/var/www/pnp1/static',  # Укажите путь к вашей папке static
 ]
 
 # Default primary key field type

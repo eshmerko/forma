@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.forms import modelformset_factory
-from .forms import CompanyForms, ZakupkiForms, LotsForms
-from .models import Company, PredmetZakupki, Lots
+from .forms import CompanyForms, ZakupkiForms, LotsForms, ClassifikatorForm
+from .models import Company, PredmetZakupki, Lots, Clasifikator
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 import requests
@@ -13,6 +13,59 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+
+from django.views.decorators.csrf import csrf_exempt
+from mistralai import Mistral
+import logging
+
+# Настройка API
+API_KEY = "JQrFsd8FA2PusEUG6eXKce5Zo1y0mjDQ"
+MODEL = "mistral-large-latest"
+client = Mistral(api_key=API_KEY)
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
+
+@csrf_exempt
+def chat(request):
+    if request.method == 'POST':
+        try:
+            user_message = request.POST.get('message')
+            if not user_message or not user_message.strip():
+                return JsonResponse({"error": "Message cannot be empty"}, status=400)
+
+            # Системный промпт для задания контекста беседы
+            system_prompt = {
+                "role": "system",
+                "content": "Вы являетесь помощником, который помогает с закупками в Республике Беларусь. Вы соблюдаете законодательство в области закупок в Республике Беларусь и только. Отвечайте четко и по существу."
+            }
+
+            # Создание запроса с системным промптом
+            chat_response = client.chat.complete(
+                model=MODEL,
+                messages=[
+                    system_prompt,  # Добавление системного промпта
+                    {"role": "user", "content": user_message.strip()}
+                ]
+            )
+            response_content = chat_response.choices[0].message.content
+
+            # Преобразование текста в формат Markdown или HTML (если необходимо)
+            formatted_response = format_response(response_content)
+
+            return JsonResponse({"response": formatted_response})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+def format_response(text):
+    """
+    Преобразует текст в читаемый вид, заменяя Markdown-синтаксис на переносы строк.
+    """
+    # Заменяем Markdown-форматирование на перенос строки
+    text = text.replace("**", "\n").replace("*", "")  # Убираем неиспользуемый Markdown
+    # Убираем лишние пробелы, если есть
+    return text.strip()
 
 @login_required
 def menu(request):
@@ -289,3 +342,31 @@ def generate_pdf(request, zakupki_id):
     p.save()
 
     return response
+
+def video_page(request):
+    return render(request, 'video.html')
+
+def classifikator(request):
+    return render(request, 'classifikator.html')  # Шаблон для отображения страницы
+
+def classifikatorajax(request):
+    form = ClassifikatorForm(request.GET)
+    
+    if form.is_valid():
+        code = form.cleaned_data.get('code')  # Получаем данные из формы
+        name = form.cleaned_data.get('name')
+
+        # Выполняем фильтрацию по коду ОКРБ и названию товара
+        queryset = Clasifikator.objects.all()
+
+        if code:
+            queryset = queryset.filter(code__icontains=code)
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        # Подготовим результаты для возврата в формате JSON
+        results = list(queryset.values('id', 'code', 'name'))
+        return JsonResponse({'results': results})
+    
+    # Если форма не валидна, вернуть пустой результат
+    return JsonResponse({'results': []})

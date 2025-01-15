@@ -1,0 +1,10 @@
+<div class="user-info">
+    <div class="user-group">
+        {% if request.user.groups.all %}
+            <p><span style="font-size: 12px;">Организация:</span> {{ request.user.groups.all.0 }}</p>
+        {% endif %}
+    </div>
+    <div class="user-name">
+        <p><span style="font-size: 12px;">Сотрудник:</span> {{ request.user.first_name }} {{ request.user.last_name }}</p>
+    </div>
+</div>

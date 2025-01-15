@@ -1,6 +1,10 @@
 from django import forms
 from .models import Company, PredmetZakupki, Lots
 
+class ClassifikatorForm(forms.Form):
+    code = forms.CharField(required=False, max_length=255)
+    name = forms.CharField(required=False, max_length=255)
+
 class CompanyForms(forms.ModelForm):
     class Meta:
         model = Company

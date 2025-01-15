@@ -1,22 +1,35 @@
-<!-- templates/menu.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block menu %}
+    {# Пустой блок, чтобы исключить mainmenu.html #}
+{% endblock %}
+
+{% block user-info %}
+    {# Пустой блок, чтобы исключить user-info.html #}
+{% endblock %}
+
+{% block content %}
+{% load static %}
     <div class="container">
         <h2 class="text-center mt-5">Добро пожаловать, {{ request.user.first_name }}!</h2>
         <h5 class="text-center mt-3">Выберете раздел для работы:</h5>
-        <br>
-        <div class="list-group">
-            <a href="{% url 'regforma' %}" class="list-group-item list-group-item-action">Закупочная деятельность</a>
-            <a href="#" class="list-group-item list-group-item-action">Метрология</a>
-            <a href="#" class="list-group-item list-group-item-action">Технология</a>
+        <div class="menu-container">
+            <div class="list-group">
+                <a href="{% url 'regforma' %}" class="list-group-item list-group-item-action">Закупочная деятельность</a>
+                <a href="{% url 'classifikator' %}" class="list-group-item list-group-item-action">Классификатор ОКРБ</a>
+                <!--<a href="#" class="list-group-item list-group-item-action">Технология</a> -->
+            </div>
         </div>
+        <div class="text-center mt-5">
+            <!-- Вывод видео в отдельное окно-->
+            <div class="text-center">
+				<a href="javascript:void(0);" onclick="openVideoWindow();">Смотреть видеоинструкцию</a>
+			</div>
+            <script>
+                function openVideoWindow() {
+                    window.open("{% url 'video_page' %}", "VideoWindow", `width=${screen.width},height=${screen.height}`);
+                }
+            </script>
+        </div><br>
     </div>
-</body>
-</html>
+{% endblock %}
