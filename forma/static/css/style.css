@@ -310,23 +310,20 @@ li {
     border-radius: 5px;
     margin-top: 20px;
     overflow: hidden;
-    position: relative;
 }
 
-/* Стили для полосы прогресса */
 .progress-bar {
     width: 0;
     height: 30px;
     background-color: #4caf50;
-    transition: width 0.5s ease-in-out;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+    transition: width 0.5s ease;
 }
 
-/* Стили для текста прогресса */
 .progress-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #000;
+    text-align: center;
+    margin-top: 5px;
     font-weight: bold;
 }

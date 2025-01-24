@@ -398,6 +398,8 @@ def calculate_percentages(codeOKPB_list):
     percentages = {code: (count / total_count) * 100 for code, count in counter.items()}
     return percentages
 
+from django.http import JsonResponse
+
 def search_view(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -410,11 +412,17 @@ def search_view(request):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
             }
 
-            for page in range(3):  # Ограничиваемся 1 страницей для примера
+            total_pages = 3  # Количество страниц
+            page_size = 10  # Количество записей на странице
+            total_requests = total_pages * page_size  # Общее количество запросов
+            request.session['progress'] = 0  # Инициализация прогресса
+            request.session['total_requests'] = total_requests  # Сохраняем общее количество запросов
+
+            for page in range(total_pages):
                 payload = {
                     "contextTextSearch": contextTextSearch,
                     "page": page,
-                    "pageSize": 10,
+                    "pageSize": page_size,
                     "sortField": "dtCreate",
                     "sortOrder": "DESC"
                 }
@@ -432,7 +440,10 @@ def search_view(request):
                                 if purchase_response.status_code == 200:
                                     purchase_data = purchase_response.json()
                                     all_purchase_data.append(purchase_data)
-                                #time.sleep(1)  # Пауза между запросами
+
+                                # Обновляем прогресс после каждого запроса
+                                request.session['progress'] += 1
+                                request.session.save()
                     else:
                         print(f"Ошибка на странице {page + 1}: {response.status_code}")
                 except requests.exceptions.RequestException as e:
@@ -458,16 +469,36 @@ def search_view(request):
             for code in sorted_percentages.keys():
                 economic_activities[code] = activities_dict.get(code, "Нет данных")
 
+            # Сбрасываем прогресс после завершения
+            request.session['progress'] = total_requests
+            request.session.save()
+
+            # Если запрос выполняется через AJAX, возвращаем JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'percentages': sorted_percentages,
+                    'search_term': contextTextSearch,
+                    'economic_activities': economic_activities
+                })
+
+            # Иначе возвращаем HTML
             return render(request, 'search_form.html', {
                 'form': form,
-                'percentages': sorted_percentages,  # Передаем отсортированный словарь
+                'percentages': sorted_percentages,
                 'search_term': contextTextSearch,
-                'economic_activities': economic_activities  # Передаем данные о видах деятельности
+                'economic_activities': economic_activities
             })
     else:
         form = SearchForm()
 
     return render(request, 'search_form.html', {'form': form})
+
+# Новый view для получения прогресса
+def get_progress(request):
+    progress = request.session.get('progress', 0)
+    total_requests = request.session.get('total_requests', 1)  # По умолчанию 1, чтобы избежать деления на 0
+    percent = (progress / total_requests) * 100  # Рассчитываем процент
+    return JsonResponse({'progress': percent})
 
 # Путь к JSON-файлу
 JSON_FILE_PATH = os.path.join(settings.BASE_DIR, 'json', 'economic_activities.json')
