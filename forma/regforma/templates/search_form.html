@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-    <h1>Подбор кода ОКРБ по наименованию</h1>
+    <h1>Поиск кода ОКРБ</h1>
     <form method="post" id="search-form">
         {% csrf_token %}
         {{ form.as_p }}
@@ -23,9 +23,9 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Код OKPБ</th>
+                    <th>Код OKPB</th>
                     <th>Вид экономической деятельности</th>
-                    <th>Вероятностный процент подбора</th>
+                    <th>Процент вхождений</th>
                 </tr>
             </thead>
             <tbody id="results-body">

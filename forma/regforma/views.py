@@ -426,6 +426,7 @@ def search_view(request):
                     "sortField": "dtCreate",
                     "sortOrder": "DESC"
                 }
+                time.sleep(1)  # Задержка между запросами
 
                 try:
                     response = requests.post(url, json=payload, headers=headers)
@@ -453,8 +454,14 @@ def search_view(request):
             with open('all_purchases.json', 'w', encoding='utf-8') as f:
                 json.dump(all_purchase_data, f, ensure_ascii=False, indent=4)
 
+            # Фильтруем данные по ключевому слову в "title"
+            filtered_data = [
+                purchase for purchase in all_purchase_data
+                if contextTextSearch.lower() in purchase.get("title", "").lower()
+            ]
+
             # Извлекаем codeOKPB и считаем проценты
-            codeOKPB_list = extract_codeOKPB(all_purchase_data)
+            codeOKPB_list = extract_codeOKPB(filtered_data)
             percentages = calculate_percentages(codeOKPB_list)
 
             # Сортируем проценты от большего к меньшему
