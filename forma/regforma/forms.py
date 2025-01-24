@@ -50,3 +50,10 @@ class LotsForms(forms.ModelForm):
                 'step': '0.01',
             }),
         }
+
+class SearchForm(forms.Form):
+    contextTextSearch = forms.CharField(
+        label='Поиск по ключевому слову',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Введите ключевое слово'})
+    )

@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.forms import modelformset_factory
-from .forms import CompanyForms, ZakupkiForms, LotsForms, ClassifikatorForm
+from .forms import CompanyForms, ZakupkiForms, LotsForms, ClassifikatorForm, SearchForm
 from .models import Company, PredmetZakupki, Lots, Clasifikator
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -17,6 +17,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 from django.views.decorators.csrf import csrf_exempt
 from mistralai import Mistral
 import logging
+import json
+from collections import Counter
+import time
 
 # Настройка API
 API_KEY = "JQrFsd8FA2PusEUG6eXKce5Zo1y0mjDQ"
@@ -370,3 +373,82 @@ def classifikatorajax(request):
     
     # Если форма не валидна, вернуть пустой результат
     return JsonResponse({'results': []})
+
+# Поиск кода ОКРБ на Gias.by
+def extract_codeOKPB(data):
+    codeOKPB_list = []
+    for purchase in data:
+        if "lots" in purchase:
+            for lot in purchase["lots"]:
+                if "codeOKPB" in lot:
+                    codeOKPB_list.extend(lot["codeOKPB"])
+    return codeOKPB_list
+
+def calculate_percentages(codeOKPB_list):
+    total_count = len(codeOKPB_list)
+    if total_count == 0:
+        return {}
+    counter = Counter(codeOKPB_list)
+    percentages = {code: (count / total_count) * 100 for code, count in counter.items()}
+    return percentages
+
+def search_view(request):
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            contextTextSearch = form.cleaned_data['contextTextSearch']
+            all_purchase_data = []
+            url = "https://www.gias.by/search/api/v1/search/purchases"
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+            }
+
+            for page in range(1):  # Ограничиваемся 2 страницами для примера
+                payload = {
+                    "contextTextSearch": contextTextSearch,
+                    "page": page,
+                    "pageSize": 10,
+                    "sortField": "dtCreate",
+                    "sortOrder": "DESC"
+                }
+
+                try:
+                    response = requests.post(url, json=payload, headers=headers)
+                    if response.status_code == 200:
+                        data = response.json()
+                        for purchase in data.get("content", []):
+                            sum_lot = purchase.get("sumLot", {})
+                            uuid = sum_lot.get("uuid")
+                            if uuid:
+                                purchase_url = f"https://gias.by/purchase/api/v1/purchase/{uuid}"
+                                purchase_response = requests.get(purchase_url)
+                                if purchase_response.status_code == 200:
+                                    purchase_data = purchase_response.json()
+                                    all_purchase_data.append(purchase_data)
+                                time.sleep(1)  # Пауза между запросами
+                    else:
+                        print(f"Ошибка на странице {page + 1}: {response.status_code}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Ошибка подключения: {e}")
+
+            # Сохраняем данные в файл (опционально)
+            with open('all_purchases.json', 'w', encoding='utf-8') as f:
+                json.dump(all_purchase_data, f, ensure_ascii=False, indent=4)
+
+            # Извлекаем codeOKPB и считаем проценты
+            codeOKPB_list = extract_codeOKPB(all_purchase_data)
+            percentages = calculate_percentages(codeOKPB_list)
+
+            # Сортируем проценты от большего к меньшему
+            sorted_percentages = dict(sorted(percentages.items(), key=lambda item: item[1], reverse=True))
+
+            return render(request, 'search_form.html', {
+                'form': form,
+                'percentages': sorted_percentages,  # Передаем отсортированный словарь
+                'search_term': contextTextSearch
+            })
+    else:
+        form = SearchForm()
+
+    return render(request, 'search_form.html', {'form': form})
