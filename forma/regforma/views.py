@@ -21,6 +21,12 @@ import json
 from collections import Counter
 import time
 
+import os
+from datetime import datetime, timedelta
+from django.conf import settings
+
+
+
 # Настройка API
 API_KEY = "JQrFsd8FA2PusEUG6eXKce5Zo1y0mjDQ"
 MODEL = "mistral-large-latest"
@@ -404,7 +410,7 @@ def search_view(request):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
             }
 
-            for page in range(1):  # Ограничиваемся 2 страницами для примера
+            for page in range(3):  # Ограничиваемся 1 страницей для примера
                 payload = {
                     "contextTextSearch": contextTextSearch,
                     "page": page,
@@ -426,7 +432,7 @@ def search_view(request):
                                 if purchase_response.status_code == 200:
                                     purchase_data = purchase_response.json()
                                     all_purchase_data.append(purchase_data)
-                                time.sleep(1)  # Пауза между запросами
+                                #time.sleep(1)  # Пауза между запросами
                     else:
                         print(f"Ошибка на странице {page + 1}: {response.status_code}")
                 except requests.exceptions.RequestException as e:
@@ -443,12 +449,77 @@ def search_view(request):
             # Сортируем проценты от большего к меньшему
             sorted_percentages = dict(sorted(percentages.items(), key=lambda item: item[1], reverse=True))
 
+            # Загружаем данные о видах экономической деятельности
+            activities_data = load_economic_activities()
+            activities_dict = {activity["code"]: activity["name"] for activity in activities_data}
+
+            # Находим названия для каждого codeOKPB
+            economic_activities = {}
+            for code in sorted_percentages.keys():
+                economic_activities[code] = activities_dict.get(code, "Нет данных")
+
             return render(request, 'search_form.html', {
                 'form': form,
                 'percentages': sorted_percentages,  # Передаем отсортированный словарь
-                'search_term': contextTextSearch
+                'search_term': contextTextSearch,
+                'economic_activities': economic_activities  # Передаем данные о видах деятельности
             })
     else:
         form = SearchForm()
 
     return render(request, 'search_form.html', {'form': form})
+
+# Путь к JSON-файлу
+JSON_FILE_PATH = os.path.join(settings.BASE_DIR, 'json', 'economic_activities.json')
+
+def update_economic_activities():
+    """
+    Обновляет данные о видах экономической деятельности и сохраняет их в JSON-файл.
+    """
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+    }
+
+    try:
+        response = requests.get("https://gias.by/directory/api/v1/economic_activity", headers=headers)
+        if response.status_code == 200:
+            activities_data = response.json()
+            # Сохраняем данные в JSON-файл
+            with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(activities_data, f, ensure_ascii=False, indent=4)
+            print("Данные успешно обновлены.")
+        else:
+            print(f"Ошибка при запросе видов экономической деятельности: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка подключения: {e}")
+
+def load_economic_activities():
+    """
+    Загружает данные о видах экономической деятельности из JSON-файла.
+    Если файл не существует или устарел, обновляет его.
+    """
+    if not os.path.exists(JSON_FILE_PATH):
+        # Если файл не существует, создаем его
+        update_economic_activities()
+
+    # Проверяем дату последнего обновления файла
+    last_modified = datetime.fromtimestamp(os.path.getmtime(JSON_FILE_PATH))
+    if datetime.now() - last_modified > timedelta(days=30):  # Обновляем раз в месяц
+        update_economic_activities()
+
+    # Загружаем данные из файла
+    with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
+        return json.load(f)
+    
+def download_economic_activities(request):
+    """
+    Представление для скачивания JSON-файла.
+    """
+    if os.path.exists(JSON_FILE_PATH):
+        with open(JSON_FILE_PATH, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/json')
+            response['Content-Disposition'] = 'attachment; filename="economic_activities.json"'
+            return response
+    else:
+        return HttpResponse("Файл не найден.", status=404)

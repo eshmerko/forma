@@ -21,7 +21,7 @@ from django.views.generic import RedirectView
 from networkx import generate_gexf  # Импорт RedirectView
 from regforma.views import (export_to_excel, filter_view, calculate_price, generate_pdf, menu, 
                             regforma, table, my_view, zakupki_detail, video_page, chat, classifikatorajax, 
-                            classifikator, search_view,)
+                            classifikator, search_view, download_economic_activities)
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/', permanent=False)),  # перенаправление на логин
@@ -43,4 +43,5 @@ urlpatterns = [
     path('classifikator/', classifikator, name='classifikator'),  # Загрузка страницы
     path('ajax/classifikatorajax/', classifikatorajax, name='classifikatorajax'),
     path('search/', search_view, name='search'),
+    path('download-economic-activities/', download_economic_activities, name='download_economic_activities'),
 ]

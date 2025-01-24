@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container">
@@ -22,6 +23,7 @@
             <thead>
                 <tr>
                     <th>Код OKPB</th>
+                    <th>Вид экономической деятельности</th>
                     <th>Процент вхождений</th>
                 </tr>
             </thead>
@@ -29,6 +31,7 @@
                 {% for code, percentage in percentages.items %}
                     <tr>
                         <td>{{ code }}</td>
+                        <td>{{ economic_activities|get_item:code }}</td>
                         <td>{{ percentage|floatformat:2 }}%</td>
                     </tr>
                 {% endfor %}
