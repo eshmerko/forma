@@ -561,3 +561,5 @@ def download_economic_activities(request):
             return response
     else:
         return HttpResponse("Файл не найден.", status=404)
+    
+    
