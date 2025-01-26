@@ -15,6 +15,18 @@ class CompanyForms(forms.ModelForm):
             'unp': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)  # Извлекаем пользователя из kwargs
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.user:  # Устанавливаем автора, если пользователь передан
+            instance.author = self.user
+        if commit:
+            instance.save()
+        return instance
+
 class ZakupkiForms(forms.ModelForm):
     class Meta:
         model = PredmetZakupki

@@ -25,6 +25,8 @@ import os
 from datetime import datetime, timedelta
 from django.conf import settings
 
+from django.contrib.auth.decorators import user_passes_test
+
 
 
 # Настройка API
@@ -131,7 +133,7 @@ def regforma(request):
             company_instance, created = Company.objects.get_or_create(
                 name=company.name,
                 unp=company.unp,
-                defaults={'adress': company.adress}
+                defaults={'adress': company.adress, 'author': request.user}
             )
             
             zakupki = zakupki_form.save(commit=False)
@@ -164,11 +166,20 @@ def regforma(request):
         'formset': formset,
     })
 
+from django.shortcuts import render
+from django.contrib.auth.models import User
+from .models import Company, PredmetZakupki, Lots
+from django.db.models import Q
+
 def filter_view(request):
-    companies = Company.objects.all().prefetch_related('zakupki__lots')  # Предварительная загрузка
-    zakupki_list = PredmetZakupki.objects.all()  # Все закупки
-    lots_list = Lots.objects.all()  # Все лоты
-    selected_filters = {}  # Хранение выбранных фильтров для отображения
+    companies = Company.objects.all().prefetch_related('zakupki__lots')
+    zakupki_list = PredmetZakupki.objects.all()
+    lots_list = Lots.objects.all()
+    selected_filters = {}
+
+    # Получаем уникальных авторов и страны для фильтров
+    authors = User.objects.distinct()
+    countries = Lots.objects.values_list('country', flat=True).distinct()
 
     if request.method == 'POST':
         # Фильтр по компании
@@ -189,8 +200,11 @@ def filter_view(request):
             zakupki_list = zakupki_list.filter(vid_zakupki=vid_zakupki)
             selected_filters['vid_zakupki'] = vid_zakupki
 
-        # Фильтрация лотов по выбранным закупкам
-        lots_list = Lots.objects.filter(zakupki__in=zakupki_list)
+        # Фильтр по автору
+        author_id = request.POST.get('author')
+        if author_id:
+            zakupki_list = zakupki_list.filter(company__author_id=author_id)
+            selected_filters['author'] = author_id
 
         # Фильтр по стране
         country = request.POST.get('country')
@@ -198,18 +212,30 @@ def filter_view(request):
             lots_list = lots_list.filter(country=country)
             selected_filters['country'] = country
 
-        # Фильтр по единице измерения
-        ed_izmer = request.POST.get('ed_izmer')
-        if ed_izmer:
-            lots_list = lots_list.filter(ed_izmer=ed_izmer)
-            selected_filters['ed_izmer'] = ed_izmer
+        # Фильтр по дате начала
+        start_date = request.POST.get('start_date')
+        if start_date:
+            zakupki_list = zakupki_list.filter(data_dogovora__gte=start_date)
+            selected_filters['start_date'] = start_date
+
+        # Фильтр по дате окончания
+        end_date = request.POST.get('end_date')
+        if end_date:
+            zakupki_list = zakupki_list.filter(data_dogovora__lte=end_date)
+            selected_filters['end_date'] = end_date
+
+        # Фильтрация лотов по выбранным закупкам
+        lots_list = Lots.objects.filter(zakupki__in=zakupki_list)
 
     return render(request, 'filter.html', {
         'companies': companies,
         'zakupki_list': zakupki_list,
         'lots_list': lots_list,
         'selected_filters': selected_filters,
+        'authors': authors,
+        'countries': countries,
     })
+
 def calculate_price(request):
     if request.method == 'POST':
         total_price = request.POST.get('total_price', 0.00)
@@ -217,7 +243,13 @@ def calculate_price(request):
     
 @login_required
 def table(request):
-    companies = Company.objects.prefetch_related('zakupki__lots')  # Предзагрузка связанных данных
+    # Если пользователь — суперпользователь, показываем все закупки
+    if request.user.is_superuser:
+        companies = Company.objects.prefetch_related('zakupki__lots').all()
+    else:
+        # Иначе показываем только закупки, созданные текущим пользователем
+        companies = Company.objects.filter(author=request.user).prefetch_related('zakupki__lots')
+    
     return render(request, 'table.html', {'companies': companies})
 
 
@@ -565,5 +597,53 @@ def download_economic_activities(request):
             return response
     else:
         return HttpResponse("Файл не найден.", status=404)
+    
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def export_all_to_excel(request):
+    # Создаем книгу и активный лист
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Все закупки"
+    
+    # Заголовки таблицы
+    headers = [
+        "№", "Название организации", "Юридический адрес", "УНП", "Автор",
+        "Вид процедуры закупки", "Номер договора", "Дата заключения договора", "Общая стоимость договора",
+        "Номер лота", "Код ОКРБ", "Предмет закупки", "Количество", "Единица измерения", "Страна", "Стоимость лота"
+    ]
+    ws.append(headers)
+    
+    # Заполняем таблицу данными
+    companies = Company.objects.prefetch_related('zakupki__lots').all()
+    
+    for company_index, company in enumerate(companies, start=1):
+        for zakupka in company.zakupki.all():
+            for lot in zakupka.lots.all():
+                ws.append([
+                    company_index,
+                    company.name,
+                    company.adress,
+                    company.unp,
+                    company.author.username,
+                    zakupka.vid_zakupki,
+                    zakupka.nomer_dogovora,
+                    zakupka.data_dogovora,
+                    zakupka.price_full,
+                    lot.number_lot,
+                    lot.cod_okrb,
+                    lot.predmet_zakupki,
+                    lot.unit,
+                    lot.ed_izmer,
+                    lot.country,
+                    lot.price_lot,
+                ])
+    
+    # Устанавливаем HTTP-заголовки для скачивания
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=all_purchases.xlsx'
+    wb.save(response)
+    return response
     
     

@@ -21,7 +21,7 @@ from django.views.generic import RedirectView
 from networkx import generate_gexf  # Импорт RedirectView
 from regforma.views import (export_to_excel, filter_view, calculate_price, generate_pdf, menu, 
                             regforma, table, my_view, zakupki_detail, video_page, chat, classifikatorajax, 
-                            classifikator, search_view, download_economic_activities, get_progress)
+                            classifikator, search_view, download_economic_activities, get_progress, export_all_to_excel)
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/', permanent=False)),  # перенаправление на логин
@@ -34,7 +34,6 @@ urlpatterns = [
     path('calculate_price/', calculate_price, name='calculate_price'),
     path('my_view/', my_view, name='my_view'),
     path('table/', table, name='table'),
-    path('table/export_excel/', export_to_excel, name='export_to_excel'),
     path('accounts/', include('django.contrib.auth.urls')),  # маршруты для логина и логаута
     path('zakupki/<int:zakupki_id>/', zakupki_detail, name='zakupki_detail'),
     path('zakupki/<int:zakupki_id>/generate_pdf/', generate_pdf, name='generate_pdf'),
@@ -45,4 +44,7 @@ urlpatterns = [
     path('search/', search_view, name='search'),
     path('download-economic-activities/', download_economic_activities, name='download_economic_activities'),
     path('get-progress/', get_progress, name='get_progress'),
+    path('export_all_to_excel/', export_all_to_excel, name='export_all_to_excel'),
+    path('export_to_excel/', export_to_excel, name='export_to_excel'),
+    path('table/export_excel/', export_to_excel, name='export_to_excel'),
 ]

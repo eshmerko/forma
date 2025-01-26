@@ -28,6 +28,32 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="col-md-4">
+            <label for="author" class="form-label">Автор</label>
+            <select name="author" id="author" class="form-select">
+                <option value="">Все</option>
+                {% for user in authors %}
+                    <option value="{{ user.id }}" {% if selected_filters.author == user.id|stringformat:"s" %}selected{% endif %}>{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="country" class="form-label">Страна</label>
+            <select name="country" id="country" class="form-select">
+                <option value="">Все</option>
+                {% for country in countries %}
+                    <option value="{{ country }}" {% if selected_filters.country == country %}selected{% endif %}>{{ country }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="start_date" class="form-label">Дата начала</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ selected_filters.start_date|default_if_none:'' }}">
+        </div>
+        <div class="col-md-4">
+            <label for="end_date" class="form-label">Дата окончания</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ selected_filters.end_date|default_if_none:'' }}">
+        </div>
         <div class="col-12">
             <button type="submit" class="btn btn-primary">Применить фильтры</button>
         </div>
@@ -40,7 +66,7 @@
     <div class="zakupka-block border rounded p-4 mb-4 bg-light">
         <h1 class="mb-4">Закупка № {{ zakupka.id }}</h1>
         <div class="info">
-            <p class="mb-1"><strong>Закупку провел:</strong> {{ request.user.first_name }} {{ request.user.last_name }}</p>
+            <p class="mb-1"><strong>Закупку провел:</strong> {{ zakupka.company.author.username }}</p>
             <p class="mb-1"><strong>Дата регистрации в БД:</strong> {{ zakupka.data_creator_zakupki|date:"d.m.Y" }}</p>
             <p class="mb-1"><strong>Компания:</strong> {{ zakupka.company.name }}</p>
             <p class="mb-1"><strong>Юридический адрес:</strong> {{ zakupka.company.adress }}</p>
