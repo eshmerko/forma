@@ -1,28 +1,33 @@
+/* Стили для .form-section, .navbar, .user-info */
 .form-section,
 .navbar,
 .user-info {
     width: 100%;
-    
     margin: 20px auto;
     border-radius: 5px;
 }
+
 .form-section {
     border: 0px solid #007bff;
     border-radius: 10px;
     background-color: #e9f5ff;
     padding: 20px;
 }
+
 .form-section-h1 {
     padding-left: 80px;
 }
+
 .lot-form {
     padding: 10px;
     border-bottom: 1px solid #007bff;
     margin-bottom: 10px;
 }
+
 .lot-form:last-child {
     border-bottom: none;
 }
+
 .user-info {
     display: flex;
     justify-content: space-between;
@@ -32,33 +37,37 @@
 .user-name {
     float: right;
 }
+
 .navbar-nav li a:hover {
     color: #fff;
     background-color: #30b055;
     border-radius: 5px;
 }
+
 /* Стиль для разделительных строк */
 .company-divider {
     height: 2px;
     background-color: #343a40;
     margin: 20px 0;
 }
+
 /* Общий стиль для всех таблиц */
 .table-style {
     margin-bottom: 20px;
 }
+
 .pdf-button {
-display: inline-block;
-padding: 15px 30px;
-font-size: 18px;
-font-weight: bold;
-text-align: center;
-text-decoration: none;
-color: white;
-background-color: #007bff; /* Цвет кнопки */
-border: none;
-border-radius: 8px;
-transition: background-color 0.3s ease;
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    color: white;
+    background-color: #007bff; /* Цвет кнопки */
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
 }
 
 .pdf-button:hover {
@@ -167,7 +176,6 @@ transition: background-color 0.3s ease;
     }
 }
 
-
 /* Дополнительные стили для чата */
 #chat-button {
     position: fixed;
@@ -241,6 +249,7 @@ transition: background-color 0.3s ease;
     border-radius: 5px;
     margin-right: 10px;
 }
+
 #chat-form button {
     background: #007bff;
     color: #fff;
@@ -287,6 +296,7 @@ transition: background-color 0.3s ease;
         opacity: 1;
     }
 }
+
 /* Стили для форматирования текста */
 strong {
     font-weight: bold;
@@ -303,6 +313,7 @@ ul {
 li {
     margin-bottom: 5px;
 }
+
 /* Стили для контейнера прогресс-бара */
 .progress-container {
     width: 100%;
@@ -326,4 +337,102 @@ li {
     text-align: center;
     margin-top: 5px;
     font-weight: bold;
+}
+
+.welcome-message {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 30px;
+}
+
+.menu-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.menu-card {
+    width: 300px; /* Фиксированная ширина */
+    height: 200px; /* Фиксированная высота */
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: center;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.menu-card a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.menu-card h3 {
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    color: #343a40;
+}
+
+.menu-card p {
+    color: #6c757d;
+    margin: 0;
+}
+
+.video-link {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.video-link a {
+    color: #0d6efd;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.video-link a:hover {
+    text-decoration: underline;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .menu-card {
+        width: 100%; /* Карточки занимают всю ширину на мобильных устройствах */
+        height: auto; /* Высота автоматическая */
+        padding: 15px;
+    }
+    .menu-card h3 {
+        font-size: 1.25rem; /* Уменьшаем размер заголовка */
+    }
+    .menu-card p {
+        font-size: 0.9rem; /* Уменьшаем размер текста */
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-message h2 {
+        font-size: 1.5rem; /* Уменьшаем размер заголовка */
+    }
+    .welcome-message h5 {
+        font-size: 1rem; /* Уменьшаем размер подзаголовка */
+    }
+    .menu-container {
+        padding: 10px; /* Уменьшаем отступы */
+    }
 }

@@ -451,7 +451,7 @@ def search_view(request):
                     print(f"Ошибка подключения: {e}")
 
             # Сохраняем данные в файл (опционально)
-            with open('all_purchases.json', 'w', encoding='utf-8') as f:
+            with open('json/all_purchases.json', 'w', encoding='utf-8') as f:
                 json.dump(all_purchase_data, f, ensure_ascii=False, indent=4)
 
             # Фильтруем данные по ключевому слову в "title"
