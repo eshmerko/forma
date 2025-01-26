@@ -11,10 +11,10 @@
         <button type="submit" class="btn btn-primary">Поиск</button>
     </form>
 
-    <!-- Прогресс-бар -->
-    <div id="progress-container" class="progress-container" style="display: none;">
-        <div id="progress-bar" class="progress-bar"></div>
-        <div id="progress-text" class="progress-text">0%</div>
+    <!-- Спиннер -->
+    <div id="spinner" class="spinner-container" style="display: none;">
+        <div class="spinner"></div>
+        <p class="spinner-text">Идет обработка запроса...</p>
     </div>
 
     <!-- Результаты поиска -->
@@ -35,43 +35,77 @@
     </div>
 </div>
 
-<!-- JavaScript для прогресс-бара и динамического обновления результатов -->
+<style>
+    /* Стили для спиннера */
+    .spinner-container {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    .spinner-text {
+        margin-top: 10px;
+        color: #666;
+        font-weight: bold;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('search-form');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
+        const spinner = document.getElementById('spinner');
         const resultsContainer = document.getElementById('results-container');
         const resultsBody = document.getElementById('results-body');
         const searchTerm = document.getElementById('search-term');
+        let abortController = null;
 
-        form.addEventListener('submit', function (event) {
-            event.preventDefault(); // Предотвращаем стандартную отправку формы
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            
+            // Отменяем предыдущий запрос
+            if (abortController) {
+                abortController.abort();
+            }
 
-            // Показываем прогресс-бар
-            progressContainer.style.display = 'block';
-
-            // Скрываем предыдущие результаты
+            // Сброс состояния
+            abortController = new AbortController();
+            spinner.style.display = 'block';
             resultsContainer.style.display = 'none';
             resultsBody.innerHTML = '';
 
-            // Отправляем форму через AJAX
-            const formData = new FormData(form);
-            fetch("{% url 'search' %}", {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
-                    'X-Requested-With': 'XMLHttpRequest'  // Указываем, что запрос выполняется через AJAX
-                }
-            }).then(response => response.json())
-              .then(data => {
-                // Обновляем прогресс-бар до 100%
-                progressBar.style.width = '100%';
-                progressText.textContent = '100%';
+            try {
+                // Отправка формы
+                const formData = new FormData(form);
+                
+                const response = await fetch("{% url 'search' %}", {
+                    method: 'POST',
+                    body: formData,
+                    signal: abortController.signal,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
 
-                // Отображаем результаты
+                if (!response.ok) throw new Error('Ошибка сервера');
+                
+                const data = await response.json();
+                
+                // Отображение результатов
                 searchTerm.textContent = data.search_term;
                 resultsBody.innerHTML = Object.entries(data.percentages)
                     .map(([code, percentage]) => `
@@ -83,23 +117,22 @@
                     `)
                     .join('');
                 resultsContainer.style.display = 'block';
-            });
 
-            // Запускаем опрос сервера для получения прогресса
-            const interval = setInterval(async () => {
-                const response = await fetch("{% url 'get_progress' %}");
-                const data = await response.json();
-                const progress = data.progress;
-
-                // Обновляем прогресс-бар
-                progressBar.style.width = `${progress}%`;
-                progressText.textContent = `${Math.round(progress)}%`;
-
-                // Останавливаем опрос, если прогресс достиг 100%
-                if (progress >= 100) {
-                    clearInterval(interval);
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при выполнении запроса: ' + error.message);
                 }
-            }, 1000); // Опрашиваем сервер каждую секунду
+            } finally {
+                spinner.style.display = 'none';
+            }
+        });
+
+        // Очистка при закрытии страницы
+        window.addEventListener('beforeunload', () => {
+            if (abortController) {
+                abortController.abort();
+            }
         });
     });
 </script>

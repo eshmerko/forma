@@ -402,6 +402,7 @@ from django.http import JsonResponse
 
 def search_view(request):
     if request.method == 'POST':
+        
         form = SearchForm(request.POST)
         if form.is_valid():
             contextTextSearch = form.cleaned_data['contextTextSearch']
@@ -502,10 +503,13 @@ def search_view(request):
 
 # Новый view для получения прогресса
 def get_progress(request):
-    progress = request.session.get('progress', 0)
-    total_requests = request.session.get('total_requests', 1)  # По умолчанию 1, чтобы избежать деления на 0
-    percent = (progress / total_requests) * 100  # Рассчитываем процент
-    return JsonResponse({'progress': percent})
+    try:
+        progress = request.session.get('progress', 0)
+        total_requests = request.session.get('total_requests', 1)
+        percent = (progress / total_requests) * 100
+        return JsonResponse({'progress': min(percent, 100)})  # Не больше 100%
+    except Exception as e:
+        return JsonResponse({'progress': 0})
 
 # Путь к JSON-файлу
 JSON_FILE_PATH = os.path.join(settings.BASE_DIR, 'json', 'economic_activities.json')
