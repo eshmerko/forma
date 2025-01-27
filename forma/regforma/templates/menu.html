@@ -10,10 +10,53 @@
 {% endblock %}
 
 {% block content %}
+    <div class="currency-data">
+        <div class="row">
+            <!-- Отображение ставки рефинансирования -->
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Ставка рефинансирования</h4>
+                        <p class="card-text">
+                            {% if refinancing_rate %}
+                                {{ refinancing_rate }} %
+                            {% else %}
+                                Данные недоступны.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Отображение базововой величины -->
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Базовая величина</h4>
+                        <p class="card-text">42 BYN</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Отображение курсов валют -->
+            {% for currency in currency_data %}
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="card-title">{{ currency.unit }} {{ currency.name }}</p>
+                        <p class="card-text">{{ currency.rate }} BYN</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <div class="welcome-message">
         <h2>Добро пожаловать, {{ request.user.first_name }}!</h2>
         <h5>Выберите раздел для работы:</h5>
     </div>
+
 
     <!-- Контейнер для карточек меню -->
     <div class="menu-container">

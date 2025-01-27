@@ -27,6 +27,8 @@ from django.conf import settings
 
 from django.contrib.auth.decorators import user_passes_test
 
+from django.views.decorators.http import require_http_methods
+from django.core.cache import cache
 
 
 # Настройка API
@@ -79,8 +81,51 @@ def format_response(text):
     return text.strip()
 
 @login_required
+@require_http_methods(["GET"])
 def menu(request):
-    return render(request, 'menu.html')
+    # Получаем данные о курсах валют
+    currency_ids = [431, 451, 456]  # Пример ID валют
+    currency_data = []
+
+    for currency_id in currency_ids:
+        cache_key = f"currency_{currency_id}"
+        data = cache.get(cache_key)
+
+        if not data:
+            url = f"https://api.nbrb.by/exrates/rates/{currency_id}"
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                cache.set(cache_key, data, timeout=60*60)  # Кэшируем на 1 час
+            else:
+                # Логируем ошибку или уведомляем пользователя
+                continue
+
+        currency_data.append({
+            "name": data.get("Cur_Name"),
+            "rate": data.get("Cur_OfficialRate"),
+            "unit": data.get("Cur_Scale")
+        })
+
+    # Получаем данные о ставке рефинансирования
+    current_date = datetime.now().strftime("%Y-%m-%d")  # Текущая дата в формате YYYY-MM-DD
+    refinancing_rate_url = f"https://www.nbrb.by/api/refinancingrate?ondate={current_date}"
+    refinancing_rate_response = requests.get(refinancing_rate_url)
+
+    refinancing_rate = None  # По умолчанию ставка неизвестна
+
+    if refinancing_rate_response.status_code == 200:
+        refinancing_rate_data = refinancing_rate_response.json()
+        # Проверяем, что данные есть и это список
+        if isinstance(refinancing_rate_data, list) and len(refinancing_rate_data) > 0:
+            # Берем первый элемент списка
+            refinancing_rate = refinancing_rate_data[0].get("Value")
+
+    return render(request, 'menu.html', {
+        'currency_data': currency_data,  # Данные о курсах валют
+        'refinancing_rate': refinancing_rate,  # Ставка рефинансирования
+    })
 
 def my_view(request):
     if request.method == 'POST':

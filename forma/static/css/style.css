@@ -453,3 +453,41 @@ li {
 .bs-tooltip-top .arrow::before {
     border-top-color: #fff;
 }
+p .card-title {
+    font-size: 1.25rem; /* Уменьшаем размер заголовка */
+}
+p .card-text {
+    font-size: 0.9rem; /* Уменьшаем размер текста */
+}
+.currency-data {
+    margin-top: 20px; /* Отступ сверху */
+    margin-bottom: 20px; /* Отступ снизу */
+}
+.currency-data h4 {
+    font-size: 1.5rem; /* Уменьшаем размер заголовка */
+}
+.currency-data .card {
+    margin-bottom: 10px; /* Отступ снизу для карточек */
+}
+.currency-data .card-body {
+    padding: 10px; /* Уменьшаем отступы внутри карточек */
+}
+.currency-data .card-title {
+    font-size: 0.7rem; /* Уменьшаем размер заголовка */
+}
+.currency-data .card-text {
+    font-size: 0.9rem; /* Уменьшаем размер текста */
+}
+.currency-data .row {
+    margin-right: -5px; /* Уменьшаем отступ справа */}
+
+    .currency-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* 5 колонок равной ширины */
+        gap: 10px; /* Расстояние между блоками */
+    }
+    
+    .currency-item {
+        display: flex;
+        justify-content: center;
+    }
