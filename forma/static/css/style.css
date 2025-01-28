@@ -491,3 +491,39 @@ p .card-text {
         display: flex;
         justify-content: center;
     }
+
+    .spinner-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #09f;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .spinner-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        color: #333;
+    }
+
+    .custom-input {
+        width: 300px; /* Ширина поля */
+        height: 50px; /* Высота поля */
+        font-size: 18px; /* Размер шрифта */
+        padding: 10px; /* Внутренний отступ */
+    }

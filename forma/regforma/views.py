@@ -30,6 +30,10 @@ from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.http import require_http_methods
 from django.core.cache import cache
 
+from bs4 import BeautifulSoup
+import pandas as pd
+from django.templatetags.static import static
+
 
 # Настройка API
 API_KEY = "JQrFsd8FA2PusEUG6eXKce5Zo1y0mjDQ"
@@ -690,5 +694,97 @@ def export_all_to_excel(request):
     response['Content-Disposition'] = 'attachment; filename=all_purchases.xlsx'
     wb.save(response)
     return response
+
+def parser(index_list):
+    start_time = time.time()  # Начало выполнения функции
+    user_agent = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0) Gecko/20100101 Firefox/97.0.'}
+    all_data = []  # Список для хранения данных от всех кодов
+    all_links = []  # Список для хранения всех ссылок
+
+    for index in index_list:
+        url = f'https://icetrade.by/producers/search?company=&find_type=1&type_company%5B1%5D=1&type_company%5B2%5D=1&num=&unp=&uraddress=&register_from=&register_to=&product=&okrb_2012={index}&sort=num%3Aasc&sbm=1&onPage=100'
+        
+        # Запрос к главной странице
+        start_request_time = time.time()
+        r = requests.get(url, headers=user_agent, verify=False)
+        soup = BeautifulSoup(r.text, 'lxml')
+        request_time = time.time() - start_request_time
+        print(f"Время на выполнение запроса к {url}: {request_time:.2f} секунд")
+        
+        # Поиск ссылок
+        el = soup.find('table', class_='auctions').find_all('a')
+        links = list(set([i.get('href') for i in el]))
+        all_links.extend(links)  # Добавляем ссылки в общий список
+
+        # Парсинг данных по каждой ссылке
+        for url_1 in links:
+            start_inner_request_time = time.time()
+            rq = requests.get(url_1, headers=user_agent, verify=False)
+            time.sleep(3)  # Эмуляция ожидания
+            soup = BeautifulSoup(rq.text, 'lxml')
+            inner_request_time = time.time() - start_inner_request_time
+            print(f"Время на выполнение запроса к {url_1}: {inner_request_time:.2f} секунд")
+            
+            # Извлечение данных
+            organiz = soup.find('table', class_='w100').find(text='Организация').find_next().text
+            adres = soup.find('table', class_='w100').find(text='Юридический адрес').find_next().text
+            unp = soup.find('table', class_='w100').find(text='УНП организации').find_next().text
+            telefon = soup.find('table', class_='w100').find(text='Телефон').find_next().text
+            email = soup.find('table', class_='w100').find(text='email').find_next().text
+            
+            all_data.append([organiz, adres, unp, telefon, email])
+
+    # Создание и сохранение DataFrame
+    start_dataframe_time = time.time()
+    header = ['Организация', 'Юридический адрес', 'УНП организации', 'Телефон', 'email']
+    df = pd.DataFrame(all_data, columns=header)
+    df.drop_duplicates(subset=None, inplace=True)
+
+    organizations = ', '.join(df['Организация'].dropna().unique())
+    emails = '; '.join(df['email'].dropna().unique())
+
+    summary_row = pd.DataFrame({
+        'Организация': [f"Итого: {organizations}"],
+        'Юридический адрес': [''],
+        'УНП организации': [''],
+        'Телефон': [''],
+        'email': [f"Итого: {emails}"]
+    })
+
+    df = pd.concat([df, summary_row], ignore_index=True)
     
+    # Сохранение CSV-файла
+    csv_output_file = os.path.join('static', 'csv', 'combined_results.csv')
+    df.to_csv(csv_output_file, sep=';', encoding='utf-8', index=False)
     
+    # Сохранение ссылок в файл
+    links_output_file = os.path.join('static', 'csv', 'links.txt')
+    with open(links_output_file, 'w', encoding='utf-8') as f:
+        f.write("\n".join(all_links))
+    
+    dataframe_time = time.time() - start_dataframe_time
+    print(f"Время на создание и сохранение DataFrame: {dataframe_time:.2f} секунд")
+    
+    # Общее время выполнения функции
+    total_time = time.time() - start_time
+    print(f"Общее время выполнения функции: {total_time:.2f} секунд")
+    
+    return csv_output_file, links_output_file  # Возвращаем пути к CSV и links.txt
+
+def parser_form(request):
+    csv_file = None
+    links_file = None
+    if request.method == 'POST':
+        index_list = request.POST.getlist('index[]')  # Получаем список кодов
+        if index_list:
+            csv_file, links_file = parser(index_list)  # Вызов функции parser
+            csv_file = static('csv/combined_results.csv')  # Использование Django шаблонного тега static
+            links_file = static('csv/links.txt')  # Путь к файлу со ссылками
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'csv_file': csv_file,
+                'links_file': links_file
+            })
+
+    return render(request, 'parser_form.html', {'csv_file': csv_file, 'links_file': links_file})
