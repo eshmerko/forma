@@ -83,99 +83,6 @@
     margin-top: 20px;
 }
 
-/* Базовые стили */
-.menu-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 50vh;
-    margin: 0;
-    background-color: #ffffff; /* Фон страницы */
-}
-
-.list-group {
-    width: 300px;
-    border-radius: 10px; /* Скругленные углы */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень */
-}
-
-.list-group-item {
-    height: 100px; /* Высота блока */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px; /* Размер текста */
-    font-weight: bold;
-    margin-bottom: 10px; /* Отступ между блоками */
-    border-radius: 10px; /* Скругленные углы */
-    text-align: center;
-    transition: transform 0.3s, background-color 0.3s; /* Плавный переход */
-}
-
-.list-group-item:hover {
-    transform: scale(1.05); /* Увеличение при наведении */
-}
-
-.list-group-item:nth-child(1) {
-    background-color: #DC3572; /* Цвет первого блока */
-}
-
-.list-group-item:nth-child(1):hover {
-    background-color: #DC3545; /* Цвет при наведении */
-}
-
-.list-group-item:nth-child(2) {
-    background-color: #4682b4; /* Цвет второго блока */
-}
-
-.list-group-item:nth-child(2):hover {
-    background-color: #3366cc; /* Цвет при наведении */
-}
-
-.list-group-item:nth-child(3) {
-    background-color: #32cd32; /* Цвет третьего блока */
-}
-
-.list-group-item:nth-child(3):hover {
-    background-color: #228b22; /* Цвет при наведении */
-}
-
-.list-group-item a {
-    color: rgb(255, 255, 255); /* Цвет текста */
-    text-decoration: none; /* Убираем подчеркивание ссылок */
-}
-
-/* Адаптивные стили */
-@media (max-width: 768px) {
-    .menu-container {
-        height: 50vh; /* Уменьшаем высоту контейнера */
-    }
-
-    .list-group {
-        width: 90%; /* Уменьшаем ширину группы */
-    }
-
-    .list-group-item {
-        height: 120px; /* Уменьшаем высоту элементов */
-        font-size: 20px; /* Уменьшаем размер текста */
-    }
-}
-
-@media (max-width: 480px) {
-    .menu-container {
-        height: 40vh; /* Еще меньше высота контейнера */
-    }
-
-    .list-group {
-        width: 100%; /* Занимаем всю ширину экрана */
-    }
-
-    .list-group-item {
-        height: 100px; /* Еще меньше высота элементов */
-        font-size: 18px; /* Еще меньше размер текста */
-    }
-}
-
 /* Дополнительные стили для чата */
 #chat-button {
     position: fixed;
@@ -341,8 +248,8 @@ li {
 
 .welcome-message {
     text-align: center;
-    margin-top: 50px;
-    margin-bottom: 30px;
+    margin-top: 30px;
+    margin-bottom: 10px;
 }
 
 .menu-container {
@@ -460,8 +367,8 @@ p .card-text {
     font-size: 0.9rem; /* Уменьшаем размер текста */
 }
 .currency-data {
-    margin-top: 20px; /* Отступ сверху */
-    margin-bottom: 20px; /* Отступ снизу */
+    margin-top: 10px; /* Отступ сверху */
+    margin-bottom: 10px; /* Отступ снизу */
 }
 .currency-data h4 {
     font-size: 1.5rem; /* Уменьшаем размер заголовка */
@@ -541,3 +448,80 @@ p .card-text {
         border-radius: 5px;
         transition: background 0.3s ease;
     }
+
+  /* Базовые стили */
+.menu-container {
+    display: flex;
+    flex-direction: column; /* Карточки располагаются вертикально */
+    justify-content: flex-start; /* Выравниваем карточки по верхнему краю */
+    align-items: center; /* Центрируем карточки по горизонтали */
+    min-height: 50vh; /* Минимальная высота контейнера */
+    margin: 0;
+    background-color: #ffffff; /* Фон страницы */
+    gap: 20px; /* Отступ между карточками */
+    padding: 20px; /* Внутренний отступ контейнера */
+}
+
+/* Контейнер для карточек (3 в ряд) */
+.row-container {
+    display: flex;
+    flex-wrap: wrap; /* Разрешаем перенос карточек на новую строку */
+    justify-content: center; /* Центрируем карточки по горизонтали */
+    gap: 20px; /* Отступ между карточками */
+    width: 100%; /* Ширина контейнера */
+    max-width: 1200px; /* Максимальная ширина контейнера */
+}
+
+/* Стили для выделенного блока */
+.menu-card.highlighted {
+    background-color: #fce4ec; /* Бледно-розовый фон */
+    border: 0px solid #d81b60; /* Розовая рамка (убрана) */
+    border-radius: 10px; /* Закругленные углы */
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Анимация */
+    width: 100%; /* Ширина карточки */
+    max-width: 600px; /* Максимальная ширина карточки */
+}
+
+.menu-card.highlighted:hover {
+    transform: translateY(-5px); /* Поднимаем блок при наведении */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Увеличиваем тень */
+}
+
+.menu-card.highlighted h3 {
+    color: #d81b60; /* Розовый цвет для заголовка */
+    margin-top: 0; /* Убираем отступ сверху */
+}
+
+.menu-card.highlighted p {
+    color: #555; /* Темно-серый цвет для текста */
+    margin-bottom: 0; /* Убираем отступ снизу */
+}
+
+/* Стили для остальных карточек */
+.menu-card {
+    background-color: white; /* Белый фон */
+    border: 1px solid #ddd; /* Серая рамка */
+    border-radius: 8px; /* Закругленные углы */
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Анимация */
+    width: calc(33.333% - 20px); /* Ширина карточки (3 в ряд с учетом отступов) */
+    max-width: 400px; /* Максимальная ширина карточки */
+}
+
+.menu-card:hover {
+    transform: translateY(-5px); /* Поднимаем блок при наведении */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Увеличиваем тень */
+}
+
+.menu-card h3 {
+    color: #333; /* Стандартный цвет для заголовка */
+    margin-top: 0; /* Убираем отступ сверху */
+}
+
+.menu-card p {
+    color: #555; /* Темно-серый цвет для текста */
+    margin-bottom: 0; /* Убираем отступ снизу */
+}
