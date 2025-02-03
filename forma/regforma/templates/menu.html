@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block menu %}
+    {# Пустой блок, чтобы исключить mainmenu.html #}
+{% endblock %}
+
+{% block user-info %}
+    {# Пустой блок, чтобы исключить user-info.html #}
+{% endblock %}
+
+{% block content %}
+    <div class="currency-data">
+        <div class="row">
+            <!-- Отображение ставки рефинансирования -->
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Ставка рефинансирования</h4>
+                        <p class="card-text">
+                            {% if refinancing_rate %}
+                                {{ refinancing_rate }} %
+                            {% else %}
+                                Данные недоступны.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Отображение базововой величины -->
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Базовая величина</h4>
+                        <p class="card-text">42 BYN</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Отображение курсов валют -->
+            {% for currency in currency_data %}
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="card-title">{{ currency.unit }} {{ currency.name }}</p>
+                        <p class="card-text">{{ currency.rate }} BYN</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="welcome-message">
+        <h2>Добро пожаловать, {{ request.user.first_name }}!</h2>
+        <h5>Выберите раздел для работы:</h5>
+    </div>
+
+
+    <!-- Контейнер для карточек меню -->
+    <div class="menu-container">
+        <!-- Карточка 1 (Закупочная деятельность) -->
+        <div class="menu-card highlighted">
+            <a href="{% url 'regforma' %}">
+                <h3>Закупочная деятельность</h3>
+                <p>Управление закупками: регистрация, поиск, отчеты.</p>
+            </a>
+        </div>
+    
+        <!-- Контейнер для остальных карточек (3 в ряд) -->
+        <div class="row-container">
+            <!-- Карточка 2 -->
+            <div class="menu-card">
+                <a href="{% url 'classifikator' %}">
+                    <h3>Классификатор ОКРБ</h3>
+                    <p>Работа с классификатором ОКРБ.</p>
+                </a>
+            </div>
+    
+            <!-- Карточка 3 -->
+            <div class="menu-card">
+                <a href="{% url 'search' %}">
+                    <h3>Подбор кода ОКРБ</h3>
+                    <p>Поиск и подбор кодов ОКРБ используя сервис gias.by</p>
+                </a>
+            </div>
+    
+            <!-- Карточка 4 -->
+            <div class="menu-card">
+                <a href="{% url 'parser_form' %}">
+                    <h3>Сбор производителей и посредников</h3>
+                    <p>Анализ данных с сайта icetrade.by</p>
+                </a>
+            </div>
+        </div>
+    </div>
+        <!-- Добавьте больше карточек по мере необходимости -->
+
+    </div>
+    <br>
+    <!-- Ссылка на видео -->
+    <div class="video-link">
+        <a href="javascript:void(0);" onclick="openVideoWindow();">Смотреть видеоинструкцию</a>
+    </div>
+
+    <script>
+        function openVideoWindow() {
+            window.open("{% url 'video_page' %}", "VideoWindow", `width=${screen.width},height=${screen.height}`);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

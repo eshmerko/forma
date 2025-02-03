@@ -1,0 +1,26 @@
+name: Auto-number comments
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  number-comments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get comment count
+        id: get-comment-count
+        run: |
+          COMMENT_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" | jq length)
+          echo "::set-output name=comment_count::$COMMENT_COUNT"
+
+      - name: Add comment number
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"body": "Comment #${{ steps.get-comment-count.outputs.comment_count }}: ${{ github.event.comment.body }}"}' \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments"

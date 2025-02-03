@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procurement Forms</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Заполните формы для компании, закупки и лотов</h1>
+
+        <form method="POST" id="procurement-form">
+            {% csrf_token %}
+            
+            <!-- Форма компании -->
+            <h3>Компания</h3>
+            {{ company_form.as_table }}
+            
+            <!-- Форма закупки -->
+            <h3>Закупка</h3>
+           
+            {{ zakupki_form.vid_zakupki.label_tag }}
+            {{ zakupki_form.vid_zakupki }}
+    
+            {{ zakupki_form.nomer_dogovora.label_tag }}
+            {{ zakupki_form.nomer_dogovora }}
+    
+            {{ zakupki_form.data_dogovora.label_tag }}
+            {{ zakupki_form.data_dogovora }}
+            
+            <label for="id_price_full">Цена:</label>
+            <input type="text" id="id_price_full" name="price_full" readonly>
+
+            <!-- Formset для лотов -->
+            <h3>Лоты</h3>
+            {{ formset.management_form }}
+            
+            <div id="lots-forms">
+                {% for form in formset %}
+                    <div class="lot-form">
+                        {{ form.as_p }}
+                    </div>
+                {% endfor %}
+            </div>
+        
+            <button type="button" id="add-lot-btn" class="btn btn-secondary">Добавить лот</button>
+            
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+        
+        <script>
+        // Функция для пересчета общей цены лотов
+        function updatePriceFull() {
+            let totalPrice = 0.00;
+            
+            // Проходим по каждому полю 'price_lot' и суммируем его значения
+            $('input[name$="price_lot"]').each(function() {
+                let price = parseFloat($(this).val());
+                if (!isNaN(price)) {
+                    totalPrice += price;
+                }
+            });
+
+            // Отправляем сумму на сервер для дальнейшей обработки (если нужно)
+            $.ajax({
+                url: "{% url 'calculate_price' %}",  // Убедитесь, что URL-адрес верный
+                method: "POST",
+                data: {
+                    'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val(),
+                    'total_price': totalPrice,
+                },
+                success: function(response) {
+                    // Обновляем поле 'price_full' с новой суммой
+                    $('#id_price_full').val(response.total_price);
+                }
+            });
+        }
+
+        // Обработчик для добавления нового лота
+        document.getElementById('add-lot-btn').addEventListener('click', function() {
+            const formCount = document.querySelectorAll('.lot-form').length;
+            const formsetManagement = document.getElementById('id_form-TOTAL_FORMS');
+            const currentCount = parseInt(formsetManagement.value);
+            
+            const newFormHtml = document.querySelector('.lot-form').cloneNode(true);
+            newFormHtml.innerHTML = newFormHtml.innerHTML.replace(/form-\d+/g, `form-${currentCount}`);
+        
+            document.getElementById('lots-forms').appendChild(newFormHtml);
+            
+            formsetManagement.value = currentCount + 1;
+        });
+
+        // Событие изменения для каждого поля 'price_lot'
+        $(document).on('input', 'input[name$="price_lot"]', function() {
+            updatePriceFull();  // Пересчитываем общую цену
+        });
+
+        </script>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

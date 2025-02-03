@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="text-center">Введите коды ОКРБ</h2>
+                <form method="post" class="mt-4" id="parser-form">
+                    {% csrf_token %}
+                    <!-- Контейнер для полей ввода -->
+                    <div id="input-container" style="max-height: 50vh; overflow-y: auto;">
+                        <div class="form-group mb-3 d-flex align-items-center">
+                            <input type="text" class="form-control custom-input" name="index[]" placeholder="01.49.19.100" oninput="validateInput(this)" required style="height: 50px; width: 80%;">
+                            <button type="button" class="btn btn-danger ms-2" onclick="removeInputField(this)" style="height: 50px; width: 50px;">-</button>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка для добавления нового поля -->
+                    <button type="button" class="btn btn-success mb-3" onclick="addInputField()" style="height: 50px; width: 100%;">Добавить еще код ОКРБ</button>
+
+                    <!-- Кнопка отправки формы -->
+                    <button type="submit" class="btn btn-primary mt-3 d-block mx-auto">Начать формирование списка</button>
+                </form>
+
+                <!-- Спиннер -->
+                <div id="spinner" class="text-center" style="display: none; padding: 20px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Идет обработка запроса...</p>
+                </div>
+
+                <!-- Контейнер для результата -->
+                <div id="resultContainer" class="mt-4">
+                    <!-- Кнопки для скачивания файлов -->
+                    <div id="downloadButtons" style="display: none;">
+                        <h5>{{ request.user.first_name }}, Ваши файлы готовы:</h5>
+                        <button id="downloadCsv" class="btn btn-success">Скачать список</button>
+                        <button id="downloadLinks" class="btn btn-info">Скачать ссылки</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS и зависимости -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+    <!-- Ваши скрипты -->
+    <script>
+        // Функция для добавления нового поля ввода
+        function addInputField() {
+            const container = document.getElementById('input-container');
+            const newInputGroup = document.createElement('div');
+            newInputGroup.classList.add('form-group', 'mb-3', 'd-flex', 'align-items-center');
+            newInputGroup.innerHTML = `
+                <input type="text" class="form-control custom-input" name="index[]" placeholder="01.49.19.100" oninput="validateInput(this)" required style="height: 50px; width: 80%;">
+                <button type="button" class="btn btn-danger ms-2" onclick="removeInputField(this)" style="height: 50px; width: 50px;">-</button>
+            `;
+            container.appendChild(newInputGroup);
+
+            // Прокручиваем контейнер вниз, чтобы новое поле было видно
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Функция для удаления поля ввода
+        function removeInputField(button) {
+            const inputGroup = button.parentElement;
+            inputGroup.remove();
+        }
+
+        // Отправка формы
+        document.getElementById('parser-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Предотвращаем стандартную отправку формы
+
+            var form = event.target;
+            var formData = new FormData(form);
+            var spinner = document.getElementById('spinner');
+            var resultContainer = document.getElementById('resultContainer');
+            var downloadButtons = document.getElementById('downloadButtons');
+
+            // Показываем спиннер
+            spinner.style.display = 'block';
+
+            // Отправляем данные формы через AJAX
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest', // Для Django, чтобы определить AJAX запрос
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Скрываем спиннер
+                spinner.style.display = 'none';
+
+                // Показываем кнопки для скачивания
+                downloadButtons.style.display = 'block';
+
+                // Устанавливаем ссылки для скачивания
+                document.getElementById('downloadCsv').onclick = () => window.location.href = data.csv_file;
+                document.getElementById('downloadLinks').onclick = () => window.location.href = data.links_file;
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                spinner.style.display = 'none';
+                resultContainer.innerHTML = '<p class="text-danger">Произошла ошибка при обработке запроса.</p>';
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+    const downloadButton = document.getElementById('downloadCsv');
+
+    // Создаем элемент для отблеска
+    const highlight = document.createElement('div');
+    highlight.style.position = 'absolute';
+    highlight.style.top = '0';
+    highlight.style.left = '-100%';
+    highlight.style.width = '100%';
+    highlight.style.height = '100%';
+    highlight.style.background = 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent)';
+    highlight.style.transition = 'left 0.5s ease';
+    highlight.style.pointerEvents = 'none'; // Чтобы не блокировал клики
+    highlight.style.borderRadius = '5px'; // Чтобы отблеск не выходил за границы кнопки
+    downloadButton.style.position = 'relative'; // Убедимся, что кнопка имеет относительное позиционирование
+    downloadButton.appendChild(highlight);
+
+    // Анимация при наведении
+    downloadButton.addEventListener('mouseenter', () => {
+        highlight.style.left = '100%';
+    });
+
+    // Сброс анимации при уходе курсора
+    downloadButton.addEventListener('mouseleave', () => {
+        highlight.style.left = '-100%';
+    });
+
+    // Дополнительный эффект при наведении (изменение фона)
+    downloadButton.addEventListener('mouseenter', () => {
+        downloadButton.style.background = 'linear-gradient(45deg, #495057, #6c757d)';
+    });
+
+    downloadButton.addEventListener('mouseleave', () => {
+        downloadButton.style.background = 'linear-gradient(45deg, #6c757d, #495057)';
+    });
+});
+    </script>
+{% endblock %}

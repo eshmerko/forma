@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container">
+    <h1>Поиск кода ОКРБ</h1>
+    <form method="post" id="search-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Поиск</button>
+    </form>
+
+    <!-- Спиннер -->
+    <div id="spinner" class="spinner-container" style="display: none;">
+        <div class="spinner"></div>
+        <p class="spinner-text">Идет обработка запроса...</p>
+    </div>
+
+    <!-- Результаты поиска -->
+    <div id="results-container" style="display: none;">
+        <h2>Результаты для "<span id="search-term"></span>"</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Код OKPБ</th>
+                    <th>Вид экономической деятельности</th>
+                    <th>Процент вхождений</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                <!-- Сюда будут добавлены строки с результатами -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('search-form');
+        const spinner = document.getElementById('spinner');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsBody = document.getElementById('results-body');
+        const searchTerm = document.getElementById('search-term');
+        let abortController = null;
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            
+            // Отменяем предыдущий запрос
+            if (abortController) {
+                abortController.abort();
+            }
+
+            // Сброс состояния
+            abortController = new AbortController();
+            spinner.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            resultsBody.innerHTML = '';
+
+            try {
+                // Отправка формы
+                const formData = new FormData(form);
+                
+                const response = await fetch("{% url 'search' %}", {
+                    method: 'POST',
+                    body: formData,
+                    signal: abortController.signal,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Ошибка сервера');
+                
+                const data = await response.json();
+                
+                // Отображение результатов
+                searchTerm.textContent = data.search_term;
+                resultsBody.innerHTML = Object.entries(data.percentages)
+                    .map(([code, percentage]) => `
+                        <tr>
+                            <td>${code}</td>
+                            <td>${data.economic_activities[code]}</td>
+                            <td>${percentage.toFixed(2)}%</td>
+                        </tr>
+                    `)
+                    .join('');
+                resultsContainer.style.display = 'block';
+
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при выполнении запроса: ' + error.message);
+                }
+            } finally {
+                spinner.style.display = 'none';
+            }
+        });
+
+        // Очистка при закрытии страницы
+        window.addEventListener('beforeunload', () => {
+            if (abortController) {
+                abortController.abort();
+            }
+        });
+    });
+</script>
+{% endblock %}

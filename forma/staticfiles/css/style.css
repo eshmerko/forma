@@ -1,0 +1,329 @@
+.form-section,
+.navbar,
+.user-info {
+    width: 100%;
+    
+    margin: 20px auto;
+    border-radius: 5px;
+}
+.form-section {
+    border: 0px solid #007bff;
+    border-radius: 10px;
+    background-color: #e9f5ff;
+    padding: 20px;
+}
+.form-section-h1 {
+    padding-left: 80px;
+}
+.lot-form {
+    padding: 10px;
+    border-bottom: 1px solid #007bff;
+    margin-bottom: 10px;
+}
+.lot-form:last-child {
+    border-bottom: none;
+}
+.user-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px auto;
+}
+
+.user-name {
+    float: right;
+}
+.navbar-nav li a:hover {
+    color: #fff;
+    background-color: #30b055;
+    border-radius: 5px;
+}
+/* Стиль для разделительных строк */
+.company-divider {
+    height: 2px;
+    background-color: #343a40;
+    margin: 20px 0;
+}
+/* Общий стиль для всех таблиц */
+.table-style {
+    margin-bottom: 20px;
+}
+.pdf-button {
+display: inline-block;
+padding: 15px 30px;
+font-size: 18px;
+font-weight: bold;
+text-align: center;
+text-decoration: none;
+color: white;
+background-color: #007bff; /* Цвет кнопки */
+border: none;
+border-radius: 8px;
+transition: background-color 0.3s ease;
+}
+
+.pdf-button:hover {
+    background-color: #0056b3; /* Цвет при наведении */
+}
+
+.pdf-button:active {
+    background-color: #003f7f; /* Цвет при нажатии */
+}
+
+.button-container {
+    text-align: center; /* Центрируем кнопку */
+    margin-top: 20px;
+}
+
+/* Базовые стили */
+.menu-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    margin: 0;
+    background-color: #ffffff; /* Фон страницы */
+}
+
+.list-group {
+    width: 300px;
+    border-radius: 10px; /* Скругленные углы */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Тень */
+}
+
+.list-group-item {
+    height: 100px; /* Высота блока */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px; /* Размер текста */
+    font-weight: bold;
+    margin-bottom: 10px; /* Отступ между блоками */
+    border-radius: 10px; /* Скругленные углы */
+    text-align: center;
+    transition: transform 0.3s, background-color 0.3s; /* Плавный переход */
+}
+
+.list-group-item:hover {
+    transform: scale(1.05); /* Увеличение при наведении */
+}
+
+.list-group-item:nth-child(1) {
+    background-color: #DC3572; /* Цвет первого блока */
+}
+
+.list-group-item:nth-child(1):hover {
+    background-color: #DC3545; /* Цвет при наведении */
+}
+
+.list-group-item:nth-child(2) {
+    background-color: #4682b4; /* Цвет второго блока */
+}
+
+.list-group-item:nth-child(2):hover {
+    background-color: #3366cc; /* Цвет при наведении */
+}
+
+.list-group-item:nth-child(3) {
+    background-color: #32cd32; /* Цвет третьего блока */
+}
+
+.list-group-item:nth-child(3):hover {
+    background-color: #228b22; /* Цвет при наведении */
+}
+
+.list-group-item a {
+    color: rgb(255, 255, 255); /* Цвет текста */
+    text-decoration: none; /* Убираем подчеркивание ссылок */
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .menu-container {
+        height: 50vh; /* Уменьшаем высоту контейнера */
+    }
+
+    .list-group {
+        width: 90%; /* Уменьшаем ширину группы */
+    }
+
+    .list-group-item {
+        height: 120px; /* Уменьшаем высоту элементов */
+        font-size: 20px; /* Уменьшаем размер текста */
+    }
+}
+
+@media (max-width: 480px) {
+    .menu-container {
+        height: 40vh; /* Еще меньше высота контейнера */
+    }
+
+    .list-group {
+        width: 100%; /* Занимаем всю ширину экрана */
+    }
+
+    .list-group-item {
+        height: 100px; /* Еще меньше высота элементов */
+        font-size: 18px; /* Еще меньше размер текста */
+    }
+}
+
+
+/* Дополнительные стили для чата */
+#chat-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    font-size: 24px;
+}
+
+#chat-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    max-height: 500px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    display: none;
+    flex-direction: column;
+}
+
+#chat-header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-size: 18px;
+}
+
+#messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.user-message {
+    background: #d1ffd8;
+}
+
+.bot-message {
+    background: #e3f2fd;
+}
+
+/* Форма ввода */
+#chat-form {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+}
+
+#message {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+#chat-form button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#chat-form button:hover {
+    background: #0056b3;
+}
+
+/* Анимация ожидания */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 3px;
+    background-color: #007bff;
+    border-radius: 50%;
+    animation: blink 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes blink {
+    0%, 80%, 100% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+}
+/* Стили для форматирования текста */
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
+}
+
+ul {
+    margin-left: 20px;
+}
+
+li {
+    margin-bottom: 5px;
+}
+/* Стили для контейнера прогресс-бара */
+.progress-container {
+    width: 100%;
+    background-color: #f3f3f3;
+    border-radius: 5px;
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0;
+    height: 30px;
+    background-color: #4caf50;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 5px;
+    font-weight: bold;
+}

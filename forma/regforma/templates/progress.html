@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form id="parser-form" method="post">
+    {% csrf_token %}
+    <label for="index">Введите индекс ОКРБ:</label>
+    <input type="text" name="index" id="index" required>
+    <button type="submit" class="btn btn-primary">Запустить парсер</button>
+</form>
+
+<div id="progress">
+    <p id="status">Ожидание запуска...</p>
+    <progress id="progress-bar" value="0" max="100"></progress>
+</div>
+
+<a id="download-link" href="#" style="display: none;" class="btn btn-success">Скачать результат</a>
+
+<script>
+    document.getElementById('parser-form').onsubmit = function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        fetch("{% url 'parser_form' %}", {
+            method: "POST",
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.task_id) {
+                checkProgress(data.task_id);
+            }
+        });
+    };
+
+    function checkProgress(taskId) {
+        const progressBar = document.getElementById('progress-bar');
+        const status = document.getElementById('status');
+        
+        const interval = setInterval(() => {
+            fetch(`/get_task_progress/${taskId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.state === 'PROGRESS') {
+                    progressBar.value = (data.current / data.total) * 100;
+                    status.textContent = `Прогресс: ${data.current} из ${data.total}`;
+                } else if (data.state === 'SUCCESS') {
+                    clearInterval(interval);
+                    progressBar.value = 100;
+                    status.textContent = 'Задача завершена! Скачайте файл:';
+                    document.getElementById('download-link').style.display = 'block';
+                } else if (data.state === 'FAILURE') {
+                    clearInterval(interval);
+                    status.textContent = 'Ошибка при выполнении задачи.';
+                }
+            });
+        }, 2000);
+    }
+</script>
+
+{% endblock %}

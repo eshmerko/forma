@@ -1,0 +1,97 @@
+<!-- Кнопка открытия чата -->
+<button id="chat-button">💬</button>
+
+<!-- Окно чата -->
+<div id="chat-container">
+    <div id="chat-header">Чат-бот</div>
+    <div id="messages">
+        <div class="bot-message message">Привет! Я ваш чат-бот на базе ИИ.</div>
+    </div>
+    <form id="chat-form">
+        <input type="text" id="message" name="message" placeholder="Введите ваше сообщение...">
+        <button type="submit">Отправить</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatButton = document.getElementById('chat-button');
+        const chatContainer = document.getElementById('chat-container');
+        const form = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message');
+        const messagesDiv = document.getElementById('messages');
+
+        // Открытие/закрытие чата
+        chatButton.addEventListener('click', () => {
+            chatContainer.style.display = chatContainer.style.display === 'none' || !chatContainer.style.display ? 'flex' : 'none';
+        });
+
+        // Отправка сообщения
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userMessage = messageInput.value.trim();
+            if (!userMessage) return;
+
+            appendMessage(userMessage, 'user-message');
+            messageInput.value = '';
+
+            // Показать индикатор загрузки
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('typing-indicator');
+            typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+            messagesDiv.appendChild(typingIndicator);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                const response = await fetch('/chat/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ message: userMessage }),
+                });
+
+                messagesDiv.removeChild(typingIndicator); // Удалить индикатор после получения ответа
+
+                if (!response.ok) {
+                    appendMessage('Ошибка сервера. Попробуйте позже.', 'bot-message');
+                    return;
+                }
+
+                const data = await response.json();
+                const botMessage = data.response || 'Нет ответа от бота.';
+                typeMessage(botMessage, 'bot-message');
+            } catch (error) {
+                messagesDiv.removeChild(typingIndicator); // Удалить индикатор при ошибке
+                appendMessage('Произошла ошибка при подключении к серверу.', 'bot-message');
+            }
+        });
+
+        // Функция для добавления сообщения с эффектом набора
+        function typeMessage(content, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', className);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Прокрутка вниз
+
+            let i = 0;
+            function typingEffect() {
+                if (i < content.length) {
+                    messageDiv.innerHTML += content.charAt(i); // Используем innerHTML для добавления HTML-разметки
+                    i++;
+                    setTimeout(typingEffect, 50); // Задержка между символами (50 мс)
+                }
+            }
+
+            typingEffect(); // Запускаем эффект набора текста
+        }
+
+        // Функция для немедленного добавления сообщения
+        function appendMessage(content, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.innerHTML = content; // Используем innerHTML для отображения HTML
+            messageDiv.classList.add('message', className);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Прокрутка вниз
+        }
+    });
+</script>
