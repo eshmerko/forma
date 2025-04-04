@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .blink-highlight {
+        animation: blinker 1.5s linear infinite;
+        font-weight: 700;
+    }
+    @keyframes blinker {
+        50% { opacity: 0.5; }
+    }
+    .alert-danger .bi {
+        font-size: 1.2em;
+        vertical-align: middle;
+    }
+    .warning-card {
+        border-left: 4px solid;
+        margin: 3px 0;
+    }
+</style>
+   <!-- Навигационная панель -->
+   <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <!-- Ваша существующая навигация -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'statistics' %}" data-path="{% url 'statistics' %}">Статистика</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Основной контент -->
+<div class="container mt-4">
+    <!-- Форма поиска -->
+    <div class="search-container">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <input type="text" 
+                       class="form-control" 
+                       name="cod_okrb" 
+                       placeholder="Введите код ОКРБ для фильтрации"
+                       value="{{ current_filter }}">
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Применить фильтр
+                </button>
+                {% if current_filter %}
+                <a href="{% url 'statistics' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Сбросить
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Уведомление о фильтрации -->
+    {% if current_filter %}
+    <div class="alert alert-info mb-4">
+        Активный фильтр: <strong>{{ current_filter }}</strong>
+    </div>
+    {% endif %}
+
+    <!-- Таблица статистики -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-bar-chart-line"></i> Статистика закупок</h4>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="w-25">Код ОКРБ</th>
+                            <th scope="col" class="w-25">Сумма в БВ</th>
+                            <th scope="col" class="w-50 text-center">Статус закупки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stats %}
+                        <tr>
+                            <td class="stat-value">{{ item.cod_okrb|default:"-" }}</td>
+                            <td class="stat-value">{{ item.bw_value }}</td>
+                            <td class="align-middle">
+                                <div class="d-grid gap-1">
+                                    {% for warn in item.warnings %}
+                                    <div class="warning-card alert-{{ warn.class }} py-2 mb-0 d-flex align-items-center">
+                                        <i class="bi 
+                                            {% if warn.class == 'danger' %}bi-x-circle-fill
+                                            {% elif warn.class == 'warning' %}bi-exclamation-triangle-fill
+                                            {% else %}bi-check-circle-fill{% endif %} 
+                                            me-2 fs-5"></i>
+                                        <span class="{{ warn.class }} {% if 'ЗАПРЕЩЕНО' in warn.text %}blink-highlight{% endif %}">
+                                            {{ warn.text }}
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                <i class="bi bi-info-circle"></i> Нет данных для отображения
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Скрипт для подсветки активной ссылки -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link[data-path]');
+        
+        navLinks.forEach(link => {
+            const linkPath = link.dataset.path;
+            const listItem = link.closest('.nav-item');
+            
+            if (currentPath === linkPath) {
+                listItem.classList.add('active');
+            } else {
+                listItem.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}

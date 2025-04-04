@@ -22,7 +22,7 @@ from networkx import generate_gexf  # Импорт RedirectView
 from regforma.views import (export_to_excel, filter_view, calculate_price, generate_pdf, menu, 
                             regforma, table, my_view, zakupki_detail, video_page, chat, classifikatorajax, 
                             classifikator, search_view, download_economic_activities, get_progress, 
-                            export_all_to_excel, parser_form)
+                            export_all_to_excel, parser_form, statistics_view)
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/', permanent=False)),  # перенаправление на логин
@@ -49,4 +49,5 @@ urlpatterns = [
     path('export_to_excel/', export_to_excel, name='export_to_excel'),
     path('table/export_excel/', export_to_excel, name='export_to_excel'),
     path('parser/', parser_form, name='parser_form'),
+    path('statistics/', statistics_view, name='statistics'),
 ]

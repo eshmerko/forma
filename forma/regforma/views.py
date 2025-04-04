@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.forms import modelformset_factory
 from .forms import CompanyForms, ZakupkiForms, LotsForms, ClassifikatorForm, SearchForm
 from .models import Company, PredmetZakupki, Lots, Clasifikator
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 import requests
@@ -788,3 +789,57 @@ def parser_form(request):
             })
 
     return render(request, 'parser_form.html', {'csv_file': csv_file, 'links_file': links_file})
+
+def statistics_view(request):
+    cod_okrb_filter = request.GET.get('cod_okrb', '').strip()
+    
+    stats = Lots.objects.all()
+    
+    if cod_okrb_filter:
+        stats = stats.filter(cod_okrb__icontains=cod_okrb_filter)
+    
+    stats = stats.values('cod_okrb').annotate(
+        total_price=Sum('price_lot')
+    ).order_by('cod_okrb')
+    
+    for item in stats:
+        bw = item['total_price'] / 42
+        item['bw_value'] = f"{bw:,.2f} БВ".replace(',', ' ')
+        item['warnings'] = []
+        item['status_class'] = 'success'
+        
+        if bw >= 1000:
+            item['warnings'].append({
+                'text': "❌ Только конкурентная процедура закупки!", 
+                'class': 'danger'
+            })
+            item['status_class'] = 'danger'
+        elif bw > 15:
+            remaining = 1000 - bw
+            if remaining > 0:
+                item['warnings'].append({
+                    'text': f"⚠️ Доступно для 'Сравнительной таблицы': {remaining:,.2f} БВ",
+                    'class': 'warning'
+                })
+            else:
+                item['warnings'].append({
+                    'text': "⛔ Закупка по 'Сравнительной таблице' запрещена!",
+                    'class': 'danger'
+                })
+            
+            # Яркое выделение запрета упрощенной процедуры
+            item['warnings'].append({
+                'text': "🚫 ЗАПРЕЩЕНО: Упрощенная процедура",
+                'class': 'danger blink-highlight'
+            })
+            item['status_class'] = 'warning'
+        else:
+            item['warnings'].append({
+                'text': "✅ Нет ограничений",
+                'class': 'success'
+            })
+    
+    return render(request, 'statistics.html', {
+        'stats': stats,
+        'current_filter': cod_okrb_filter
+    })
