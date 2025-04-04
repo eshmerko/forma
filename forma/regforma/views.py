@@ -790,6 +790,7 @@ def parser_form(request):
 
     return render(request, 'parser_form.html', {'csv_file': csv_file, 'links_file': links_file})
 
+# views.py
 def statistics_view(request):
     cod_okrb_filter = request.GET.get('cod_okrb', '').strip()
     
@@ -808,35 +809,50 @@ def statistics_view(request):
         item['warnings'] = []
         item['status_class'] = 'success'
         
+        # Форматирование чисел с пробелами в качестве разделителей тысяч
+        def format_bw(value):
+            return f"{value:,.2f}".replace(',', ' ').replace('.', ',')
+
         if bw >= 1000:
             item['warnings'].append({
                 'text': "❌ Только конкурентная процедура закупки!", 
-                'class': 'danger'
+                'class': 'danger',
+                'icon': 'bi-x-circle-fill'
             })
             item['status_class'] = 'danger'
         elif bw > 15:
             remaining = 1000 - bw
             if remaining > 0:
                 item['warnings'].append({
-                    'text': f"⚠️ Доступно для 'Сравнительной таблицы': {remaining:,.2f} БВ",
-                    'class': 'warning'
+                    'text': f"⚠️ Доступно для 'Сравнительной таблицы': {format_bw(remaining)} БВ",
+                    'class': 'warning',
+                    'icon': 'bi-exclamation-triangle-fill'
                 })
             else:
                 item['warnings'].append({
                     'text': "⛔ Закупка по 'Сравнительной таблице' запрещена!",
-                    'class': 'danger'
+                    'class': 'danger',
+                    'icon': 'bi-x-circle-fill'
                 })
             
-            # Яркое выделение запрета упрощенной процедуры
             item['warnings'].append({
                 'text': "🚫 ЗАПРЕЩЕНО: Упрощенная процедура",
-                'class': 'danger blink-highlight'
+                'class': 'danger blink-highlight',
+                'icon': 'bi-slash-circle-fill'
             })
             item['status_class'] = 'warning'
         else:
+            remaining_to_limit = 15 - bw
+            if remaining_to_limit < 1:
+                item['warnings'].append({
+                    'text': f"⚠️ Внимание! До лимита упрощенной процедуры осталось всего {format_bw(remaining_to_limit)} БВ",
+                    'class': 'warning',
+                    'icon': 'bi-exclamation-triangle-fill'
+                })
             item['warnings'].append({
-                'text': "✅ Нет ограничений",
-                'class': 'success'
+                'text': f"✅ Упрощенная процедура возможна для закупки до {format_bw(remaining_to_limit)} БВ",
+                'class': 'success',
+                'icon': 'bi-check-circle-fill'
             })
     
     return render(request, 'statistics.html', {
